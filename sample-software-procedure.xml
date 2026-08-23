@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dmodule>
+  <identAndStatusSection>
+    <dmAddress>
+      <dmIdent>
+        <language languageIsoCode="en"/>
+        <issueInfo issueNumber="001"/>
+      </dmIdent>
+    </dmAddress>
+    <dmStatus securityClassification="UNCLASSIFIED"/>
+  </identAndStatusSection>
+  <applicCrossRefTable>
+    <applic id="APP-001">
+      <displayText><simplePara>product == "Surface Sensor Software" AND software >= "4.0.0"</simplePara></displayText>
+    </applic>
+  </applicCrossRefTable>
+  <content>
+    <procedure>
+      <mainProcedure>
+        <title>Install a software update package</title>
+        <warning><warningAndCautionPara>Make sure that the radar system is in MAINTENANCE mode before you install the software package.</warningAndCautionPara></warning>
+        <title>Procedure</title>
+        <proceduralStep><para>Connect the maintenance laptop to the service port.</para><para>Connect the approved Ethernet service cable.</para></proceduralStep>
+        <proceduralStep><para>Import the approved software package.</para><para>Select Import package.</para></proceduralStep>
+        <codeblock>$ rpu-maint package verify RPU-4.3.1.pkg
+Signature: VALID
+Applicability: MATCH</codeblock>
+        <note><notePara>Record the installed software version in the configuration record.</notePara></note>
+      </mainProcedure>
+    </procedure>
+  </content>
+</dmodule>

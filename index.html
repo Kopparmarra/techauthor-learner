@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TechAuthor Learner v7.13</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">TA</div>
+      <div>
+        <div class="brand-title">TechAuthor Learner</div>
+        <div class="brand-subtitle">Arbortext-like structured authoring trainer · v7.13</div>
+      </div>
+    </div>
+    <div class="project-strip">
+      <span class="muted">CSDB:</span>
+      <span class="server-pill">Connected · Surface Sensor Software</span>
+      <span class="separator">›</span>
+      <span id="currentDocLabel">DM 23-31-01-110-801A-A</span>
+    </div>
+    <div class="top-actions">
+      <button id="backToCsdbBtn" class="btn">← CSDB</button>
+      <button id="checkInBtn" class="btn">Check in</button><button id="learningModeBtn" class="btn accent">Learning Mode</button>
+      <button id="saveBtn" class="btn accent">Save</button>
+      <button id="resetDemoBtn" class="btn">Reset demo</button>
+      <button id="themeBtn" class="icon-btn" title="Toggle compact mode">◐</button>
+    </div>
+  </header>
+
+  <nav class="menubar">
+    <button data-menu="file">File</button>
+    <button data-menu="edit">Edit</button>
+    <button data-menu="find">Find</button>
+    <button data-menu="view">View</button>
+    <button data-menu="insert">Insert</button>
+    <button data-menu="table">Table</button>
+    <button data-menu="tools">Tools</button>
+    <button data-menu="review">Workflow</button>
+    <button data-menu="help">Help</button>
+    <span class="menu-spacer"></span>
+    <span class="status-pill"><span class="dot green"></span> Local demo</span>
+  </nav>
+
+  <div class="toolbar">
+    <button id="insertFromCsdbBtn" class="toolbar-text-btn" title="Insert reusable content from CSDB">＋ Insert from CSDB</button>
+    
+    <button id="openBtn" title="Import">📂</button>
+    <button id="exportBtn" title="Export">⇩</button>
+    <span class="tool-sep"></span>
+    <button id="undoBtn" title="Undo (Ctrl+Z)">↶</button>
+    <button id="redoBtn" title="Redo (Ctrl+Y)">↷</button>
+    <span class="tool-sep"></span>
+    <select id="insertPositionSelect" title="Insertion position">
+<option value="inside">Inside</option>
+<option value="after">After</option>
+<option value="before">Before</option>
+</select>
+    <select id="elementSelect" title="Insert Markup list — Ctrl+M" title="Insert Markup list (Ctrl+M)">
+      <option value="">Insert valid element…</option>
+    </select>
+    <button id="insertElementBtn" type="button" class="accent-icon" title="Insert selected element">＋</button>
+    <button id="insertXrefBtn" title="Insert managed cross-reference">Xref</button>
+    <button id="tableEditorBtn" title="Open table editor">Table</button><button id="modifyAttributesBtn" title="Modify Attributes (Ctrl+D)">Modify Attributes</button>
+    <span class="tool-sep"></span>
+    <button id="moveUpBtn" title="Move selected element up">↑</button>
+    <button id="moveDownBtn" title="Move selected element down">↓</button>
+    <button id="deleteElementBtn" class="danger-tool" title="Delete selected element">Delete</button>
+    <span class="tool-sep"></span>
+    <button id="validateBtn" title="Tools > Check Completeness">Check Completeness</button>
+    <select id="tagModeSelect" title="Tag display (Ctrl+Shift+L cycles)"><option value="full">Full Tags</option><option value="partial" selected>Partial Tags</option><option value="none">No Tags</option></select><button id="quickTagsBtn" title="Quick Tags (Enter)">Quick Tags</button><button id="previewBtn">Preview</button>
+    <button id="findReplaceBtn" title="Find / Replace (Ctrl+F)">Find / Replace</button>
+  </div>
+
+  <main class="workspace">
+    <aside class="left-pane panel">
+      <div class="pane-tabs left-pane-tabs">
+        <button class="pane-tab active" data-lefttab="document">Document Map</button>
+        <button class="pane-tab" data-lefttab="resources">Resources</button>
+        <button id="hideDocumentMapBtn" class="pane-close-btn" type="button" title="Hide Document Map">×</button>
+      </div>
+      <div class="search-row">
+        <input id="treeSearch" placeholder="Find in document">
+        <button id="clearTreeSearch">×</button>
+      </div>
+      <div class="left-actions">
+        <button id="expandTreeBtn" title="Expand all">Expand</button>
+        <button id="collapseTreeBtn" title="Collapse all">Collapse</button>
+      </div>
+      <div id="contentTree" class="tree"></div>
+      <div class="left-footer author-footer">
+        <div><strong>Server state</strong></div>
+        <div><span class="dot yellow"></span> Checked out</div>
+        <div><strong>Issue</strong></div>
+        <div>001 · In Work</div>
+      </div>
+    </aside>
+
+    <section class="center-pane">
+      <div class="doc-tabs">
+        <div class="doc-tab active">
+          <span class="doc-icon">▤</span>
+          <span id="docTabTitle">23-31-01-110-801A-A — Install a software update package</span>
+          <span class="doc-dirty" id="dirtyMark"></span>
+        </div>
+      </div>
+
+      <div class="context-bar">
+        <span class="context-label">Context:</span>
+        <span id="contextPath" class="context-path">procedure › mainProcedure</span>
+        <span class="context-spacer"></span>
+        <span id="elementHint" class="context-hint">Select an element to see valid children</span>
+      </div>
+
+      <div class="editor-shell">
+        <div id="lineNumbers" class="line-numbers"></div>
+        <div id="emptyState" class="empty-state hidden">
+          <div class="empty-icon">▤</div>
+          <h2>No document open</h2>
+          <p>Create a new document or import an existing XML/DITA/Markdown file.</p>
+          <div class="empty-actions">
+            <button id="emptyNewDocBtn" class="btn accent">New Document</button>
+            <button id="emptyImportBtn" class="btn">Import Document</button>
+          </div>
+        </div>
+        <article id="authorEditor" class="author-editor"></article>
+        <textarea id="sourceEditor" class="source-editor hidden" spellcheck="false"></textarea>
+        <div id="previewPane" class="preview-pane hidden"></div>
+      </div>
+
+      <div class="bottom-tabs">
+        <button type="button" class="bottom-tab active" data-mode="content" onclick="setMode('content')">Content</button>
+        <button type="button" class="bottom-tab" data-mode="source" onclick="setMode('source')">XML</button>
+        <button type="button" class="bottom-tab" data-mode="preview" onclick="setMode('preview')">Preview</button>
+        <button type="button" class="bottom-tab" data-mode="history" onclick="setMode('history')">History</button>
+        <button type="button" class="bottom-tab" data-mode="issues" onclick="setMode('issues')">Issues <span id="issueBadge" class="badge">0</span></button>
+        <span class="bottom-spacer"></span>
+        <span id="cursorStatus">Ready</span><span id="contextRulesStatus" class="arb-status active" title="Context Rules are on">CTX</span><span id="completenessStatus" class="arb-status" title="Completeness status">CMP</span>
+      </div>
+    </section>
+
+    <aside class="right-pane panel">
+      <div class="pane-tabs">
+        <button class="pane-tab active" data-righttab="properties">Properties</button>
+        <button class="pane-tab" data-righttab="applicability">Applicability</button>
+        <button class="pane-tab" data-righttab="references">References</button>
+        <button class="pane-tab" data-righttab="brex">BREX Rules</button><button class="pane-tab" data-righttab="learning">Learning</button>
+        <button class="pane-tab" data-righttab="validation">Validation</button>
+      </div>
+
+      <div id="propertiesTab" class="right-tab-content">
+        <section class="prop-section open">
+          <button class="prop-header">Identification <span>⌃</span></button>
+          <div class="prop-body">
+            <label>DMC<input id="dmcInput" value="23-31-01-110-801A-A"></label>
+            <div class="two-col">
+              <label>Issue<input id="issueInput" value="001"></label>
+              <label>Language<select id="langInput"><option>en</option><option>sv</option></select></label>
+            </div>
+            <label>Title<input id="titleInput" value="Install a software update package"></label>
+            <label>Security Class<select id="securityInput"><option>UNCLASSIFIED</option><option>RESTRICTED</option></select></label>
+          </div>
+        </section>
+
+        <section class="prop-section open">
+          <button class="prop-header">Document State <span>⌃</span></button>
+          <div class="prop-body">
+            <label>Workflow State
+              <select id="workflowInput">
+                <option>In Work</option>
+                <option>In Review</option>
+                <option>Approved</option>
+              </select>
+            </label>
+            <label>Author<input id="authorInput" value="Technical Writer"></label>
+            <label>Responsible<input id="responsibleInput" value="System Engineer"></label>
+            <label>Reviewer<input id="reviewerInput" value="QA Reviewer"></label>
+            <div class="workflow-actions">
+              <button id="submitReviewBtn" class="btn full">Submit for review</button>
+              <button id="approveBtn" class="btn accent full">Approve</button>
+              <button id="returnBtn" class="btn full">Return to author</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="prop-section open">
+          <button class="prop-header">Selected Element <span>⌃</span></button>
+          <div class="prop-body">
+            <label>Element<input id="selectedElementName" readonly value="mainProcedure"></label>
+            <label>ID<input id="selectedElementId" placeholder="Optional element ID"></label>
+            <label>Class<input id="selectedElementClass" placeholder="Optional class"></label>
+            <button id="applyElementPropsBtn" class="btn full">Apply element properties</button>
+          </div>
+        </section>
+
+        <section class="prop-section open">
+          <button class="prop-header">Review / Comments <span>⌃</span></button>
+          <div class="prop-body">
+            <label>Comment<textarea id="commentInput" placeholder="Add reviewer comment"></textarea></label>
+            <button id="addCommentBtn" class="btn full">Add comment</button>
+            <div id="commentList" class="comment-list"></div>
+          </div>
+        </section>
+
+        <section class="prop-section open">
+          <button class="prop-header">Authoring Rules <span>⌃</span></button>
+          <div class="prop-body">
+            <label>Rule profile
+              <select id="ruleProfileInput">
+                <option value="saab_strict">Project BREX — Strict</option>
+                <option value="balanced">Project BREX — Balanced</option>
+                <option value="training">Training profile</option>
+              </select>
+            </label>
+            <label class="check"><input id="steToggle" type="checkbox" checked> STE-style checks</label>
+            <label class="check"><input id="structureToggle" type="checkbox" checked> Structure checks</label>
+            <label class="check"><input id="xrefToggle" type="checkbox" checked> Cross-reference checks</label>
+            <button id="validateSideBtn" class="btn accent full">Run validation</button>
+          </div>
+        </section>
+      </div>
+
+      <div id="applicabilityTab" class="right-tab-content hidden">
+        <div class="applicability-editor">
+          <h3>Applicability</h3>
+          <p class="small-muted">Demo editor for product/version/effectivity conditions.</p>
+          <label>Product
+            <select id="appProduct">
+              <option>Surface Sensor Software</option>
+              <option>Radar Processing Unit</option>
+              <option>Operator Display</option>
+            </select>
+          </label>
+          <label>Variant
+            <select id="appVariant">
+              <option>All</option>
+              <option>Baseline 4.x</option>
+              <option>Baseline 3.x</option>
+            </select>
+          </label>
+          <label>Software from<input id="appSwFrom" value="4.0.0"></label>
+          <label>Software to<input id="appSwTo" value="4.9.x"></label>
+          <label>Serial/effectivity<input id="appSerial" value="All serials"></label>
+          <label>Expression<textarea id="appExpression">product == "Surface Sensor Software" AND software >= "4.0.0"</textarea></label>
+          <button id="applyApplicabilityBtn" class="btn accent full">Apply applicability</button>
+          <div id="applicabilityPreview" class="app-preview"></div>
+        </div>
+      </div>
+
+      <div id="referencesTab" class="right-tab-content hidden">
+        <div class="refs-panel">
+          <h3>References / Where Used</h3>
+          <div id="refsSummary" class="small-muted">Select a document.</div>
+          <div id="refsList" class="validation-list"></div>
+        </div>
+      </div>
+
+      <div id="brexTab" class="right-tab-content hidden">
+        <div class="brex-panel">
+          <div class="brex-head">
+            <div>
+              <h3>Active BREX</h3>
+              <div id="brexDmLabel" class="small-muted">BREX-DM-DEMO-001</div>
+            </div>
+            <select id="brexProfileSelect">
+              <option value="saab_strict">Project BREX — Strict</option>
+              <option value="balanced">Project BREX — Balanced</option>
+              <option value="training">Training profile</option>
+            </select>
+          </div>
+          <div class="brex-summary">
+            <div><strong>Schema</strong><span id="brexSchemaLabel">S1000D procedure</span></div>
+            <div><strong>Context</strong><span id="brexContextLabel">mainProcedure</span></div>
+            <div><strong>Allowed here</strong><span id="brexAllowedLabel">—</span></div>
+          </div>
+          <div id="brexRulesList" class="brex-rules-list"></div>
+        </div>
+      </div>
+
+      <div id="learningTab" class="right-tab-content hidden">
+  <div class="learning-panel">
+    <div class="learning-head">
+      <div>
+        <div class="learning-headline"><h3>Learning</h3></div>
+        <div class="small-muted">Build muscle memory first, then add Arbortext and S1000D concepts.</div>
+        <div id="learningDmType" class="learning-context-line">DM type: —</div>
+      </div>
+    </div>
+
+    <div class="learning-switch learning-switch-4">
+      <button id="beginnerDrillsBtn" class="learn-tab active">Beginner Drills</button>
+      <button id="arbortextBasicsBtn" class="learn-tab">Arbortext Basics</button>
+      <button id="structuredPracticeBtn" class="learn-tab">S1000D Practice</button>
+      <button id="elementCoachBtn" class="learn-tab">Element Coach</button>
+    </div>
+
+    <div id="beginnerDrillsView" class="learning-view">
+      <div class="chapter-nav compact-drill-nav">
+        <label>Chapter<select id="drillChapterSelect"></select></label>
+        <label>Jump to drill<select id="drillJumpSelect"></select></label>
+      </div>
+      <div id="drillCard" class="learning-card drill-card-primary"></div>
+      <div class="drill-nav-row drill-nav-row-inline">
+        <button id="skipDrillBtn" class="btn">Skip →</button>
+      </div>
+      <div class="drill-actions compact-drill-actions">
+        <button id="startDrillsBtn" class="btn accent full">Start chapter</button>
+        <button id="checkDrillBtn" class="btn full hidden">Check</button>
+        <button id="nextDrillBtn" class="btn accent full hidden">Next drill</button>
+      </div>
+      <div id="drillFeedback"></div>
+      <div class="learning-card beginner-intro beginner-intro-compact">
+        <h4>Core Skills — 5 chapters · 100 drills</h4>
+        <div class="drill-stats compact-stats">
+          <span><strong id="drillProgress">0 / 20</strong><small>chapter</small></span>
+          <span><strong id="drillScore">0%</strong><small>session</small></span>
+          <span><strong id="drillStreak">0</strong><small>streak</small></span>
+        </div>
+        <p>Short everyday authoring drills. Progress is saved so you can jump past drills you already know.</p>
+      </div>
+    </div>
+
+    <div id="arbortextBasicsView" class="learning-view hidden">
+      <div class="learning-context-card">
+        <strong>PTC-documented interaction patterns</strong>
+        These drills focus on how Arbortext Editor behaves, not on project-specific S1000D rules.
+      </div>
+      <div class="basics-grid">
+        <button class="learning-module" data-basic="tags">
+          <strong>1. Tag Display</strong><span>Full / Partial / No Tags</span>
+        </button>
+        <button class="learning-module" data-basic="quicktags">
+          <strong>2. Quick Tags</strong><span>Cursor → Enter → valid elements</span>
+        </button>
+        <button class="learning-module" data-basic="attributes">
+          <strong>3. Modify Attributes</strong><span>Element-specific valid attributes</span>
+        </button>
+        <button class="learning-module" data-basic="documentmap">
+          <strong>4. Document Map</strong><span>Select, navigate and restructure</span>
+        </button>
+      </div>
+      <div id="arbortextBasicDetail" class="learning-card"></div>
+      <button id="startBasicExerciseBtn" class="btn accent full">Start selected exercise</button>
+    </div>
+
+    <div id="structuredPracticeView" class="learning-view hidden">
+      <div class="learning-card">
+        <h4>Structured Authoring / S1000D Practice</h4>
+        <p>Use these after the basic editor movements feel natural.</p>
+      </div>
+      <label class="practice-label">Exercise
+        <select id="exerciseSelect"></select>
+      </label>
+      <button id="loadExerciseBtn" class="btn accent full">Load exercise</button>
+      <div id="exerciseInfo" class="learning-card"></div>
+      <div class="learning-divider"></div>
+      <div id="guidedTaskCard" class="learning-card"></div>
+      <button id="startGuidedTaskBtn" class="btn accent full">Start guided task</button>
+      <button id="scoreGuidedTaskBtn" class="btn full">Check progress / score</button>
+      <div id="guidedScore"></div>
+    </div>
+
+    <div id="elementCoachView" class="learning-view hidden">
+      <div id="elementCoachContent"></div>
+    </div>
+  </div>
+</div>
+<div id="validationTab" class="right-tab-content hidden">
+        <div class="validation-summary">
+          <div><span id="errCount" class="count redtxt">0</span> Errors</div>
+          <div><span id="warnCount" class="count yellowtxt">0</span> Warnings</div>
+          <div><span id="infoCount" class="count bluetxt">0</span> Info</div>
+        </div>
+        <div id="validationList" class="validation-list"></div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<input id="fileInput" type="file" accept=".xml,.dita,.md,.markdown,.json,.txt" hidden>
+
+<div id="modalBackdrop" class="modal-backdrop hidden">
+  <div id="modal" class="modal"></div>
+</div>
+
+<!-- Load order: pure data → drills curriculum → application runtime (no bundler). -->
+<script src="js/schema.js"></script>
+<script src="js/drills.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
