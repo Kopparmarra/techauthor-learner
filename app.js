@@ -2165,13 +2165,47 @@ function documentTypeTreeRows(){
  }
  return branch("mainProcedure",0);
 }
+function documentTypeViewerInsertionTarget(type){
+ if(!type||!state.model)return null;
+ const allowedIn=context=>validChildrenForContext(context).includes(type);
+ const s=currentSelectionContext();
+
+ // Arbortext Document Type Viewer inserts the selected markup at the next
+ // valid location after the cursor. This is intentionally independent of
+ // the main Insert Position toolbar setting.
+ if(s.kind==="root"){
+   return allowedIn("mainProcedure")?{kind:"root",mode:"inside",label:"mainProcedure"}:null;
+ }
+
+ // A valid child location in the current element is the closest location.
+ if(allowedIn(s.node.type))return {kind:"node",id:s.node.id,mode:"inside",label:s.node.type};
+
+ // Then try immediately after the current element, walking out through
+ // ancestor levels as needed.
+ let r=getNodeById(s.node.id);
+ while(r){
+   const parentContext=r.parent?.type||"mainProcedure";
+   if(allowedIn(parentContext))return {kind:"node",id:r.node.id,mode:"after",label:parentContext};
+   if(!r.parent)break;
+   r=getNodeById(r.parent.id);
+ }
+
+ // Finally search forward for the next element that can contain the type.
+ const flat=flattenSearchNodes();
+ const start=Math.max(-1,flat.findIndex(n=>n.id===s.node.id));
+ for(let i=start+1;i<flat.length;i++){
+   if(allowedIn(flat[i].type))return {kind:"node",id:flat[i].id,mode:"inside",label:flat[i].type};
+ }
+ return null;
+}
 function updateDocumentTypeViewerInsertState(){
  const btn=$("#dtdInsert");if(!btn)return;
  const type=state.dtdViewerType;
- const allowed=!!type&&validElementsForInsertion(currentInsertPosition()).includes(type);
+ const target=documentTypeViewerInsertionTarget(type);
+ const allowed=!!target;
  btn.disabled=!allowed;
  btn.classList.toggle("accent",allowed);
- btn.title=allowed?`Insert <${type}> at the current location`:`<${type||"element"}> is not valid at the current insertion location`;
+ btn.title=allowed?`Insert <${type}> at the next valid location`:`No valid location for <${type||"element"}> after the current cursor position`;
 }
 function updateDocumentTypeViewerDisplay(){
  const tree=$("#dtdTree");if(!tree)return;
@@ -2207,10 +2241,30 @@ function findDocumentTypeFromViewer(direction=1){
 function insertDocumentTypeFromViewer(){
  const type=state.dtdViewerType;
  if(!type)return toast("Select an element type in the viewer first");
- const allowed=validElementsForInsertion(currentInsertPosition());
- if(!allowed.includes(type))return toast(`<${type}> is not valid at the current insertion location`);
- const inserted=insertElement(type);
- if(inserted){state.lastLearningAction={kind:"doctype-insert",type};updateDocumentTypeViewerDisplay()}
+ const target=documentTypeViewerInsertionTarget(type);
+ if(!target)return toast(`No valid location for <${type}> after the current cursor position`);
+
+ const posSelect=$("#insertPositionSelect");
+ const oldPos=posSelect?.value||"inside";
+ if(target.kind==="root"){
+   state.rootSelected=true;
+   state.selectedId=null;
+ }else{
+   state.rootSelected=false;
+   state.selectedId=target.id;
+ }
+ if(posSelect)posSelect.value=target.mode;
+ let inserted=null;
+ try{
+   inserted=insertElement(type);
+ }finally{
+   if(posSelect)posSelect.value=oldPos;
+   refreshInsertOptions();
+ }
+ if(inserted){
+   state.lastLearningAction={kind:"doctype-insert",type};
+   updateDocumentTypeViewerDisplay();
+ }
 }
 function showDocumentTypeViewer(){
  const current=currentSelectionContext();

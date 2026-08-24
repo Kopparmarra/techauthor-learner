@@ -734,3 +734,9 @@ The Find menu now opens the appropriate tab instead of using unrelated dialogs, 
 - Insert is now enabled only when the selected element type is valid at the current insertion location.
 - Invalid insertions are shown with a disabled grey button instead of an active accent button.
 - Viewer selection remains highlighted after Update Display / Find navigation.
+
+
+## v7.18 — Document Type Viewer next-valid insertion
+- Fixed Document Type Viewer Insert staying disabled because it inherited the main toolbar's Insert Position setting.
+- Document Type Viewer now follows Arbortext behavior more closely: Insert targets the next valid location after the current cursor/selection.
+- Insert availability is calculated independently of the normal Insert Position control.
