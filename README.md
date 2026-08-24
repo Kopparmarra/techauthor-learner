@@ -736,7 +736,7 @@ The Find menu now opens the appropriate tab instead of using unrelated dialogs, 
 - Viewer selection remains highlighted after Update Display / Find navigation.
 
 
-## v7.18 — Document Type Viewer next-valid insertion
+## v7.19 — Document Type Viewer next-valid insertion
 - Fixed Document Type Viewer Insert staying disabled because it inherited the main toolbar's Insert Position setting.
 - Document Type Viewer now follows Arbortext behavior more closely: Insert targets the next valid location after the current cursor/selection.
 - Insert availability is calculated independently of the normal Insert Position control.

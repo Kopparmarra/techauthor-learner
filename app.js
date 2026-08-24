@@ -2243,28 +2243,79 @@ function insertDocumentTypeFromViewer(){
  if(!type)return toast("Select an element type in the viewer first");
  const target=documentTypeViewerInsertionTarget(type);
  if(!target)return toast(`No valid location for <${type}> after the current cursor position`);
+ if(!state.model)return toast("No document is open");
+ if(isLocked())return toast("Approved documents are locked");
 
- const posSelect=$("#insertPositionSelect");
- const oldPos=posSelect?.value||"inside";
+ // Insert directly at the location resolved by the Document Type Viewer.
+ // Do not route this through the toolbar's Insert Position control: the
+ // viewer has its own "next valid location" behaviour.
+ let nodes=null;
+ let index=-1;
+ let parent=null;
+ let position=target.mode;
+ let context="mainProcedure";
+
  if(target.kind==="root"){
-   state.rootSelected=true;
-   state.selectedId=null;
+   nodes=state.model.nodes;
+   index=nodes.length-1;
+   position="inside";
+   context="mainProcedure";
  }else{
-   state.rootSelected=false;
-   state.selectedId=target.id;
+   const r=getNodeById(target.id);
+   if(!r)return toast(`The insertion location for <${type}> is no longer available`);
+   if(target.mode==="inside"){
+     r.node.children=r.node.children||[];
+     nodes=r.node.children;
+     index=nodes.length-1;
+     parent=r.node;
+     context=r.node.type;
+   }else{
+     nodes=r.nodes;
+     index=r.index;
+     parent=r.parent;
+     context=r.parent?.type||"mainProcedure";
+   }
  }
- if(posSelect)posSelect.value=target.mode;
- let inserted=null;
- try{
-   inserted=insertElement(type);
- }finally{
-   if(posSelect)posSelect.value=oldPos;
-   refreshInsertOptions();
+
+ const allowed=validChildrenForContext(context);
+ if(!allowed.includes(type)){
+   updateDocumentTypeViewerInsertState();
+   return toast(`<${type}> is not valid in <${context}>`);
  }
- if(inserted){
-   state.lastLearningAction={kind:"doctype-insert",type};
-   updateDocumentTypeViewerDisplay();
- }
+
+ pushUndo(`Insert <${type}>`);
+ const n={id:uid(),type,text:defaultText(type)};
+ if(type==="table"){n.rows=[["Item","Value"],["Example","Value"]];n.headerRow=true;}
+ if(type==="step")n.children=[];
+
+ if(position==="inside") nodes.push(n);
+ else if(position==="before") nodes.splice(index,0,n);
+ else nodes.splice(index+1,0,n);
+
+ state.selectedId=n.id;
+ state.rootSelected=false;
+ state.history.unshift(hist(`Inserted <${type}> from Document Type Viewer in <${context}>`));
+ state.lastLearningAction={kind:"doctype-insert",type};
+ state.drillEvidence=state.drillEvidence||{};
+ state.drillEvidence.doctypeInserted=type;
+ markDirty();
+
+ renderAuthor();
+ renderTree();
+ refreshInsertOptions();
+ updateContext();
+ syncSourcePassive();
+ renderPreview();
+ renderElementCoach();
+ revealSelectedInEditor();
+ if(typeof renderDmcBreakdown==="function")renderDmcBreakdown();
+ if(state.drillSession)updateDrillStats();
+ if($("#cursorStatus"))$("#cursorStatus").textContent=`Inserted <${type}> from Document Type Viewer`;
+ toast(`Inserted <${type}>`);
+
+ // Keep the viewer open and synchronize it with the newly inserted element.
+ updateDocumentTypeViewerDisplay();
+ return n;
 }
 function showDocumentTypeViewer(){
  const current=currentSelectionContext();
