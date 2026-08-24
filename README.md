@@ -543,7 +543,7 @@ Progress is stored separately in localStorage. You can jump to any drill, skip f
 
 Researched against PTC Arbortext Editor 8.3 documentation and adjusted the trainer toward the standard editor:
 - Menu bar now includes File, Edit, Find, View, Insert, Table, Tools, Workflow, Help. Workflow is explicitly a trainer/CSDB extension.
-- Tools now uses Arbortext terminology: Context Rules, Check Completeness, Show Context, Document Type Viewer.
+- Tools uses the Arbortext-oriented training set: Context Rules, Check Completeness, and Document Type Viewer.
 - Check Completeness uses CMP/INC status cues and a Completeness Check Log-style window.
 - Added Find Tag/Attribute.
 - Added Change Markup simulation.
@@ -713,3 +713,11 @@ Find/Replace includes Find What, Replace With, Match Markup, Match Case, Match P
 Find Tag/Attribute includes Tag Name, Attribute Name, Attribute Value, search options and direction.
 
 The Find menu now opens the appropriate tab instead of using unrelated dialogs, and the Beginner Drills were updated to teach this workflow. Structural-find drills verify that the requested tag was actually found.
+
+
+## v7.15 — Remove non-Arbortext Show Context
+
+- Removed the standalone **Tools > Show Context** command because it does not correspond to a stock Arbortext Editor command and duplicated information already exposed through context-sensitive Insert Markup / Quick Tags.
+- Removed the related implementation and drill evidence.
+- Replaced both Show Context drills with practical Arbortext-style tasks while preserving the 5 × 20 (100 drill) curriculum.
+- Tools is intentionally leaner: Context Rules, Check Completeness, and Document Type Viewer remain.

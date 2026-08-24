@@ -309,7 +309,6 @@ function openMainMenu(menu){
     else if(menu==="tools")showModal("Tools",`<div class="export-grid">
       <button class="export-option" onclick="checkCompleteness()"><strong>Check Completeness</strong><span>Check required structure, attributes, references and empty elements</span></button>
       <button class="export-option" onclick="toggleContextRules()"><strong>${state.contextRulesOn?"✓ ":""}Context Rules</strong><span>Interactive validity checking while editing</span></button>
-      <button class="export-option" onclick="showContextInfo()"><strong>Show Context</strong><span>Show elements valid at the current position</span></button>
       <button class="export-option" onclick="showDocumentTypeViewer()"><strong>Document Type Viewer</strong><span>Inspect the training schema and valid children</span></button>
     </div><div class="menu-note">Project BREX and STE checks in this trainer are additional S1000D/project layers, not core Arbortext menu items.</div>`);
     else if(menu==="review")showModal("Workflow (trainer extension)",`<p>Current state: <strong>${esc(state.model?.meta?.workflow||"—")}</strong></p><p>This menu represents the CSDB/S1000D workflow integration around Arbortext, not a stock Arbortext menu.</p>`);
@@ -2150,8 +2149,6 @@ function showInsertMarkupDialog(){
 }
 function insertTableShortcut(){const old=$("#elementSelect")?.value;try{if(validElementsForInsertion(currentInsertPosition()).includes("table"))insertElement("table");else showTableEditor()}finally{if($("#elementSelect")&&old)$("#elementSelect").value=old}noteShortcut("insert-table")}
 function toggleContextRules(){state.contextRulesOn=!state.contextRulesOn;const s=$("#contextRulesStatus");if(s){s.classList.toggle("active",state.contextRulesOn);s.textContent=state.contextRulesOn?"CTX":"CTX OFF"}toast(`Context Rules ${state.contextRulesOn?"ON":"OFF"}`);state.lastLearningAction={kind:"context-rules",value:state.contextRulesOn}}
-function showContextInfo(){const s=currentSelectionContext(),ic=insertionContextFor(currentInsertPosition()),opts=validElementsForInsertion(currentInsertPosition());showModal("Show Context",`<p>Selected: <strong>${esc(s.kind==="root"?"mainProcedure":s.node.type)}</strong></p><p>Insertion context: <strong>${esc(ic.context)}</strong></p><p>Valid markup:</p><div class="dtd-viewer">${opts.map(x=>`&lt;${esc(x)}&gt;`).join("  ")||"(none)"}</div>`);state.lastLearningAction={kind:"show-context"};
- state.drillEvidence=state.drillEvidence||{};state.drillEvidence.showContextOpened=true}
 function showDocumentTypeViewer(){const current=currentSelectionContext();const rows=Object.entries(schema).map(([p,c])=>`<div class="${(current.kind==="root"?"mainProcedure":current.node.type)===p?"ctx":""}">&lt;${esc(p)}&gt; → ${c.length?c.map(x=>`&lt;${esc(x)}&gt;`).join(", "):"text / leaf"}</div>`).join("");showModal("Document Type Viewer",`<div class="dtd-viewer">${rows}</div><p class="menu-note">Training schema view. In Arbortext, Document Type Viewer exposes the document structure and helps insert markup at valid locations.</p>`);state.lastLearningAction={kind:"doctype-viewer"};
  state.drillEvidence=state.drillEvidence||{};state.drillEvidence.doctypeOpened=true}
 function showShortcutReference(){showModal("Keyboard Shortcuts",`<div class="dtd-viewer"><b>Editing</b><br>Ctrl+Z Undo · Ctrl+Y Redo · Ctrl+S Save · Ctrl+F Find/Replace · Ctrl+D Modify Attributes<br><br><b>Markup</b><br>Enter Quick Tags · Ctrl+M Insert Markup list · Ctrl+Shift+M Insert Markup dialog<br><br><b>Views</b><br>Ctrl+Shift+L cycle tag display · Alt+Ctrl+O Document Map · Alt+Ctrl+N Normal · Ctrl+L Refresh · F6 cycle focus<br><br><b>Table</b><br>Alt+Shift+T Insert Table</div><p class="menu-note">These are based on PTC Arbortext Editor default mappings. The trainer implements the subset that maps cleanly to this browser simulation.</p>`)}
@@ -3023,7 +3020,7 @@ function showHistory(){showModal("Document history",`<div class="history-list">$
 function showHelp(){showModal("TechAuthor Learner — Help",`
 <div class="learning-card">
   <h4>What this is</h4>
-  <p>A browser-based <strong>Arbortext-like structured authoring trainer</strong> (v7.13). Practice Document Map navigation, Quick Tags, context-sensitive insert, Modify Attributes, Check Completeness, and an S1000D-style workflow without a full CSDB.</p>
+  <p>A browser-based <strong>Arbortext-like structured authoring trainer</strong> (v7.15). Practice Document Map navigation, Quick Tags, context-sensitive insert, Modify Attributes, Check Completeness, and an S1000D-style workflow without a full CSDB.</p>
 </div>
 <div class="learning-card" style="margin-top:8px">
   <h4>Learning Mode</h4>
