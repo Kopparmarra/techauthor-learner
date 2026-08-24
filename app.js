@@ -2149,8 +2149,83 @@ function showInsertMarkupDialog(){
 }
 function insertTableShortcut(){const old=$("#elementSelect")?.value;try{if(validElementsForInsertion(currentInsertPosition()).includes("table"))insertElement("table");else showTableEditor()}finally{if($("#elementSelect")&&old)$("#elementSelect").value=old}noteShortcut("insert-table")}
 function toggleContextRules(){state.contextRulesOn=!state.contextRulesOn;const s=$("#contextRulesStatus");if(s){s.classList.toggle("active",state.contextRulesOn);s.textContent=state.contextRulesOn?"CTX":"CTX OFF"}toast(`Context Rules ${state.contextRulesOn?"ON":"OFF"}`);state.lastLearningAction={kind:"context-rules",value:state.contextRulesOn}}
-function showDocumentTypeViewer(){const current=currentSelectionContext();const rows=Object.entries(schema).map(([p,c])=>`<div class="${(current.kind==="root"?"mainProcedure":current.node.type)===p?"ctx":""}">&lt;${esc(p)}&gt; → ${c.length?c.map(x=>`&lt;${esc(x)}&gt;`).join(", "):"text / leaf"}</div>`).join("");showModal("Document Type Viewer",`<div class="dtd-viewer">${rows}</div><p class="menu-note">Training schema view. In Arbortext, Document Type Viewer exposes the document structure and helps insert markup at valid locations.</p>`);state.lastLearningAction={kind:"doctype-viewer"};
- state.drillEvidence=state.drillEvidence||{};state.drillEvidence.doctypeOpened=true}
+function documentTypeTreeRows(){
+ const current=currentSelectionContext();
+ const currentType=current.kind==="root"?"mainProcedure":current.node.type;
+ const seen=new Set();
+ function branch(type,depth){
+   if(seen.has(type))return "";
+   seen.add(type);
+   const kids=schema[type]||[];
+   const isCurrent=type===currentType;
+   const marker=kids.length?"▾":"·";
+   let html=`<button type="button" class="dtd-tree-row${isCurrent?" ctx":""}" data-dtd-type="${esc(type)}" style="--dtd-depth:${depth}"><span class="dtd-tree-marker">${marker}</span><span>&lt;${esc(type)}&gt;</span></button>`;
+   kids.forEach(k=>{html+=branch(k,depth+1)});
+   return html;
+ }
+ return branch("mainProcedure",0);
+}
+function updateDocumentTypeViewerDisplay(){
+ const tree=$("#dtdTree");if(!tree)return;
+ tree.innerHTML=documentTypeTreeRows();
+ bindDocumentTypeViewerRows();
+ const current=currentSelectionContext();
+ const label=$("#dtdCurrentContext");
+ if(label)label.textContent=current.kind==="root"?"mainProcedure":current.node.type;
+}
+function bindDocumentTypeViewerRows(){
+ $$("[data-dtd-type]").forEach(row=>row.onclick=()=>{
+   $$("[data-dtd-type]").forEach(r=>r.classList.remove("dtd-picked"));
+   row.classList.add("dtd-picked");
+   state.dtdViewerType=row.dataset.dtdType;
+   const picked=$("#dtdPickedType");if(picked)picked.textContent=`<${state.dtdViewerType}>`;
+ });
+}
+function findDocumentTypeFromViewer(direction=1){
+ const type=state.dtdViewerType;
+ if(!type)return toast("Select an element type in the viewer first");
+ const flat=flattenSearchNodes();
+ const hits=flat.filter(n=>n.type===type);
+ if(!hits.length)return toast(`No <${type}> element found in this document`);
+ let i=hits.findIndex(n=>n.id===state.selectedId);
+ if(direction>0)i=(i+1+hits.length)%hits.length;else i=(i-1+hits.length)%hits.length;
+ const target=hits[i];selectElement(target.id);revealSelectedInEditor();
+ state.lastLearningAction={kind:"doctype-find",type,direction};
+ updateDocumentTypeViewerDisplay();
+}
+function insertDocumentTypeFromViewer(){
+ const type=state.dtdViewerType;
+ if(!type)return toast("Select an element type in the viewer first");
+ const allowed=validElementsForInsertion(currentInsertPosition());
+ if(!allowed.includes(type))return toast(`<${type}> is not valid at the current insertion location`);
+ const inserted=insertElement(type);
+ if(inserted){state.lastLearningAction={kind:"doctype-insert",type};updateDocumentTypeViewerDisplay()}
+}
+function showDocumentTypeViewer(){
+ const current=currentSelectionContext();
+ state.dtdViewerType=current.kind==="root"?"mainProcedure":current.node.type;
+ showModal("Document Type Viewer",`
+   <div class="dtd-viewer-shell">
+     <div class="dtd-viewer-head">Current context: <strong>&lt;<span id="dtdCurrentContext">${esc(state.dtdViewerType)}</span>&gt;</strong></div>
+     <div id="dtdTree" class="dtd-tree">${documentTypeTreeRows()}</div>
+     <div class="dtd-viewer-selected">Selected type: <strong id="dtdPickedType">&lt;${esc(state.dtdViewerType)}&gt;</strong></div>
+     <div class="dtd-viewer-actions">
+       <button type="button" class="btn" id="dtdFindBack">Find Backward</button>
+       <button type="button" class="btn" id="dtdFindForward">Find Forward</button>
+       <button type="button" class="btn" id="dtdUpdate">Update Display</button>
+       <button type="button" class="btn accent" id="dtdInsert">Insert</button>
+     </div>
+   </div>
+   <p class="menu-note">Arbortext-style training view: inspect the document type hierarchy, find elements in the document, and insert the selected element when it is valid at the current location.</p>`);
+ bindDocumentTypeViewerRows();
+ const active=$(`[data-dtd-type="${state.dtdViewerType}"]`);if(active)active.classList.add("dtd-picked");
+ $("#dtdFindBack").onclick=()=>findDocumentTypeFromViewer(-1);
+ $("#dtdFindForward").onclick=()=>findDocumentTypeFromViewer(1);
+ $("#dtdUpdate").onclick=updateDocumentTypeViewerDisplay;
+ $("#dtdInsert").onclick=insertDocumentTypeFromViewer;
+ state.lastLearningAction={kind:"doctype-viewer"};
+ state.drillEvidence=state.drillEvidence||{};state.drillEvidence.doctypeOpened=true
+}
 function showShortcutReference(){showModal("Keyboard Shortcuts",`<div class="dtd-viewer"><b>Editing</b><br>Ctrl+Z Undo · Ctrl+Y Redo · Ctrl+S Save · Ctrl+F Find/Replace · Ctrl+D Modify Attributes<br><br><b>Markup</b><br>Enter Quick Tags · Ctrl+M Insert Markup list · Ctrl+Shift+M Insert Markup dialog<br><br><b>Views</b><br>Ctrl+Shift+L cycle tag display · Alt+Ctrl+O Document Map · Alt+Ctrl+N Normal · Ctrl+L Refresh · F6 cycle focus<br><br><b>Table</b><br>Alt+Shift+T Insert Table</div><p class="menu-note">These are based on PTC Arbortext Editor default mappings. The trainer implements the subset that maps cleanly to this browser simulation.</p>`)}
 
 function findElementBoundary(which){

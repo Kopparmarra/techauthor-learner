@@ -715,9 +715,15 @@ Find Tag/Attribute includes Tag Name, Attribute Name, Attribute Value, search op
 The Find menu now opens the appropriate tab instead of using unrelated dialogs, and the Beginner Drills were updated to teach this workflow. Structural-find drills verify that the requested tag was actually found.
 
 
-## v7.15 — Remove non-Arbortext Show Context
+## v7.16 — Remove non-Arbortext Show Context
 
 - Removed the standalone **Tools > Show Context** command because it does not correspond to a stock Arbortext Editor command and duplicated information already exposed through context-sensitive Insert Markup / Quick Tags.
 - Removed the related implementation and drill evidence.
 - Replaced both Show Context drills with practical Arbortext-style tasks while preserving the 5 × 20 (100 drill) curriculum.
 - Tools is intentionally leaner: Context Rules, Check Completeness, and Document Type Viewer remain.
+
+
+## v7.16 — Document Type Viewer refinement
+- Reworked Document Type Viewer into an Arbortext-inspired hierarchy view.
+- Added element selection plus Find Forward, Find Backward, Update Display and context-valid Insert actions.
+- Kept the viewer intentionally compact so it supports learning without adding another dense editor panel.
