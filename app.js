@@ -66,7 +66,7 @@ function criticalClickAction(id,el){
     case "validateSideBtn": return checkCompleteness();
     case "quickTagsBtn": return toggleQuickTags($("#quickTagsBtn"));
     case "previewBtn": return setMode("preview");
-    case "findReplaceBtn": state.lastLearningAction={kind:"findreplace"};return showFindReplace();
+    case "findReplaceBtn": state.lastLearningAction={kind:"findreplace"};return showFindReplace("text");
     case "clearTreeSearch": if($("#treeSearch"))$("#treeSearch").value="";return renderTree();
     case "expandTreeBtn": return expandAllTree();
     case "collapseTreeBtn": return collapseAllTree();
@@ -278,10 +278,14 @@ function openMainMenu(menu){
       <button class="export-option" id="applyXmlModal"><strong>Apply XML to Content</strong><span>Trainer source synchronization</span></button>
     </div>`);
     else if(menu==="find")showModal("Find",`<div class="export-grid">
-      <button class="export-option" onclick="showFindReplace()"><strong>${k("Ctrl+F","Find / Replace")}</strong><span>Find or replace text</span></button>
-      <button class="export-option" onclick="showFindTagAttribute()"><strong>Find Tag/Attribute</strong><span>Search structural markup</span></button>
-      <button class="export-option" onclick="findAgain()"><strong>${k("Ctrl+Shift+F","Find Again")}</strong><span>Repeat the last structural/text find</span></button>
-    </div>`);
+      <button class="export-option" onclick="showFindReplace('text')"><strong>${k("Ctrl+F","Find/Replace")}</strong><span>Open the Find/Replace tab</span></button>
+      <button class="export-option" onclick="findAgain()"><strong>Find Next</strong><span>Repeat the last Find operation</span></button>
+      <button class="export-option" onclick="showFindReplace('tag')"><strong>Find Tag/Attribute</strong><span>Open Find/Replace on the structural search tab</span></button>
+      <button class="export-option" onclick="showFindReplace('entity')"><strong>Find Entity</strong><span>Open the Find Entity tab</span></button>
+      <button class="export-option" onclick="showFindReplace('pi')"><strong>Find Processing Instruction</strong><span>Open the PI search tab</span></button>
+      <button class="export-option" onclick="findElementBoundary('start')"><strong>Find Element Start</strong><span>Move to the start of the selected element</span></button>
+      <button class="export-option" onclick="findElementBoundary('end')"><strong>Find Element End</strong><span>Move to the end of the selected element</span></button>
+    </div><div class="menu-note">Arbortext's Find/Replace dialog uses tabs for text, tag/attribute, entity and processing-instruction searches.</div>`);
     else if(menu==="view")showModal("View",`<div class="export-grid">
       <button class="export-option" onclick="applyTagMode('full')"><strong>Full Tags</strong><span>Show complete tag boundaries</span></button>
       <button class="export-option" onclick="applyTagMode('partial')"><strong>Partial Tags</strong><span>Compact markup display</span></button>
@@ -1392,39 +1396,347 @@ function showTableEditor(){
    markDirty();renderAuthor();syncSourcePassive();$("#modalBackdrop").classList.add("hidden");toast("Table updated");
  };
 }
-function showFindReplace(){
+
+function showFindReplace(initialTab="text"){
   if(!state.model)return alert("No document open.");
   state.lastLearningAction={kind:"findreplace"};
   state.drillEvidence=state.drillEvidence||{};
   state.drillEvidence.findOpened=true;
-  showModal("Find / Replace",`
-    <div class="project-dialog-grid">
-      <label>Find</label><input id="findText">
-      <label>Replace with</label><input id="replaceText">
-    </div>`,
-    `<button class="btn" data-close>Close</button><button class="btn" id="findNextBtn">Find next</button><button class="btn accent" id="replaceAllBtn">Replace all</button>`);
-  $("#findNextBtn").onclick=()=>{
-    const q=($("#findText").value||"").trim();if(!q)return;
-    const node=findFirstNodeContaining(q);
-    if(!node)return alert("Text not found.");
-    selectElement(node.id,{renderTree:false});renderTree();revealSelectedInEditor();
-    const el=$(`.xml-node[data-id="${node.id}"] .node-content`);if(el){el.classList.add("find-hit");setTimeout(()=>el.classList.remove("find-hit"),1800)}
+  state.drillEvidence.findTab=initialTab;
+
+  const tabs=[
+    ["text","Find/Replace"],
+    ["tag","Find Tag/Attribute"],
+    ["entity","Find Entity"],
+    ["pi","Find Processing Instruction"]
+  ];
+
+  const body=`
+    <div class="arb-find-dialog">
+      <div class="arb-find-tabs" role="tablist">
+        ${tabs.map(([id,label])=>`<button type="button" class="arb-find-tab ${id===initialTab?"active":""}" data-find-tab="${id}">${label}</button>`).join("")}
+      </div>
+
+      <div class="arb-find-panel ${initialTab==="text"?"active":""}" data-find-panel="text">
+        <div class="arb-find-grid">
+          <label>Find What</label><input id="findText" value="${esc(state.lastFindText?.query||"")}">
+          <label>Replace With</label><input id="replaceText" value="${esc(state.lastFindText?.replace||"")}">
+        </div>
+        <fieldset class="arb-find-group"><legend>Value Search Options</legend>
+          <label><input type="checkbox" id="findMatchMarkup"> Match Markup</label>
+          <label><input type="checkbox" id="findMatchCase"> Match Case</label>
+          <label><input type="checkbox" id="findMatchPatterns"> Match Patterns</label>
+        </fieldset>
+        ${findDirectionHtml("text")}
+      </div>
+
+      <div class="arb-find-panel ${initialTab==="tag"?"active":""}" data-find-panel="tag">
+        <div class="arb-find-grid">
+          <label>Tag Name</label><input id="findTagName" value="${esc(state.lastFindTag?.tag||"")}" placeholder="step or <step>">
+          <label>Attribute Name</label><input id="findAttrName" value="${esc(state.lastFindTag?.attr||"")}" placeholder="applicRefId">
+          <label>Attribute Value</label><input id="findAttrValue" value="${esc(state.lastFindTag?.value||"")}" placeholder="APP-01">
+        </div>
+        <fieldset class="arb-find-group"><legend>Value Search Options</legend>
+          <label><input type="checkbox" id="tagExactMatch" checked> Exact Match</label>
+          <label><input type="checkbox" id="tagMatchCase"> Match Case</label>
+          <label><input type="checkbox" id="tagMatchPatterns"> Match Patterns</label>
+        </fieldset>
+        ${findDirectionHtml("tag")}
+      </div>
+
+      <div class="arb-find-panel ${initialTab==="entity"?"active":""}" data-find-panel="entity">
+        <div class="arb-find-grid">
+          <label>Name</label><input id="findEntityName" placeholder="entity name">
+        </div>
+        <fieldset class="arb-find-group"><legend>Entity Types</legend>
+          <label><input type="checkbox" id="entityText" checked> Text</label>
+          <label><input type="checkbox" id="entityFile" checked> File</label>
+          <label><input type="checkbox" id="entityGraphic"> Graphic</label>
+        </fieldset>
+        ${findDirectionHtml("entity")}
+        <p class="menu-note">This training document does not currently contain declared SGML/XML entities. The tab is included to mirror Arbortext's Find/Replace dialog.</p>
+      </div>
+
+      <div class="arb-find-panel ${initialTab==="pi"?"active":""}" data-find-panel="pi">
+        <div class="arb-find-grid">
+          <label>PI Type</label>
+          <select id="findPiType">
+            <option value="">(any)</option>
+            <option>Bookmark</option>
+            <option>Generic PI</option>
+            <option>Font</option>
+            <option>Specified Horizontal Space</option>
+          </select>
+          <label>Field Name</label><input id="findPiFieldName">
+          <label>Field Value</label><input id="findPiFieldValue">
+        </div>
+        <fieldset class="arb-find-group"><legend>Value Search Options</legend>
+          <label><input type="checkbox" id="piExactMatch" checked> Exact Match</label>
+          <label><input type="checkbox" id="piMatchCase"> Match Case</label>
+          <label><input type="checkbox" id="piMatchPatterns"> Match Patterns</label>
+        </fieldset>
+        ${findDirectionHtml("pi")}
+        <p class="menu-note">No processing instructions are present in the current training model.</p>
+      </div>
+    </div>`;
+
+  showModal("Find/Replace",body,`
+    <button class="btn" data-close>Close</button>
+    <button class="btn" id="findNextBtn">Find Next</button>
+    <button class="btn" id="replaceBtn">Replace</button>
+    <button class="btn accent" id="replaceAllBtn">Replace All</button>`);
+
+  const setTab=(tab)=>{
+    $$(".arb-find-tab").forEach(b=>b.classList.toggle("active",b.dataset.findTab===tab));
+    $$(".arb-find-panel").forEach(p=>p.classList.toggle("active",p.dataset.findPanel===tab));
+    state.findDialogTab=tab;
+    state.drillEvidence=state.drillEvidence||{};
+    state.drillEvidence.findTab=tab;
+    const replaceMode=tab==="text";
+    $("#replaceBtn").disabled=!replaceMode;
+    $("#replaceAllBtn").disabled=!replaceMode;
+    setTimeout(()=>{
+      const target=tab==="text"?$("#findText"):tab==="tag"?$("#findTagName"):tab==="entity"?$("#findEntityName"):$("#findPiType");
+      target?.focus();
+    },0);
   };
-  $("#replaceAllBtn").onclick=()=>{
-    const q=$("#findText").value||"",r=$("#replaceText").value||"";if(!q)return;
-    let count=0;
-    function walk(nodes){
-      (nodes||[]).forEach(n=>{
-        if(typeof n.text==="string"&&n.text.includes(q)){n.text=n.text.split(q).join(r);count++}
-        if(n.rows)n.rows=n.rows.map(row=>row.map(c=>typeof c==="string"?c.split(q).join(r):c));
-        if(n.children)walk(n.children);
-      });
-    }
-    walk(state.model.nodes);
-    renderAuthor();renderTree();markDirty();state.history.unshift(hist(`Replace all: ${q} → ${r}`));
-    $("#modalBackdrop").classList.add("hidden");toast(`Replaced in ${count} element(s)`);
-  };
+
+  $$(".arb-find-tab").forEach(b=>b.onclick=()=>setTab(b.dataset.findTab));
+  setTab(initialTab);
+
+  $("#findNextBtn").onclick=()=>runFindNextFromDialog();
+  $("#replaceBtn").onclick=()=>replaceCurrentFind();
+  $("#replaceAllBtn").onclick=()=>replaceAllTextFind();
+
+  ["findText","replaceText","findTagName","findAttrName","findAttrValue"].forEach(id=>{
+    $("#"+id)?.addEventListener("keydown",e=>{
+      if(e.key==="Enter"){e.preventDefault();runFindNextFromDialog()}
+    });
+  });
 }
+
+function findDirectionHtml(prefix){
+ return `<fieldset class="arb-find-group arb-direction"><legend>Direction</legend>
+   <label><input type="radio" name="${prefix}Direction" value="up"> Up</label>
+   <label><input type="radio" name="${prefix}Direction" value="down" checked> Down</label>
+   <label class="arb-find-file-entities"><input type="checkbox" id="${prefix}SearchFileEntities"> Search File Entities</label>
+ </fieldset>`;
+}
+
+function dialogDirection(prefix){
+ return document.querySelector(`input[name="${prefix}Direction"]:checked`)?.value||"down";
+}
+
+function runFindNextFromDialog(){
+ const tab=state.findDialogTab||"text";
+ if(tab==="text"){
+   const q=($("#findText")?.value||"").trim();
+   if(!q)return;
+   const options={
+     matchCase:!!$("#findMatchCase")?.checked,
+     matchPatterns:!!$("#findMatchPatterns")?.checked,
+     matchMarkup:!!$("#findMatchMarkup")?.checked,
+     direction:dialogDirection("text")
+   };
+   const hit=findTextNode(q,options);
+   state.lastFindText={query:q,replace:$("#replaceText")?.value||"",...options};
+   if(!hit)return alert("Text not found.");
+   selectFindHit(hit,"text");
+   state.lastLearningAction={kind:"find-text",query:q};
+   state.drillEvidence=state.drillEvidence||{};
+   state.drillEvidence.findTextHit=true;
+   return;
+ }
+ if(tab==="tag"){
+   const tag=$("#findTagName")?.value.trim()||"";
+   const attr=$("#findAttrName")?.value.trim()||"";
+   const value=$("#findAttrValue")?.value.trim()||"";
+   return findTagAttribute(tag,attr,value,{
+     exact:!!$("#tagExactMatch")?.checked,
+     matchCase:!!$("#tagMatchCase")?.checked,
+     patterns:!!$("#tagMatchPatterns")?.checked,
+     direction:dialogDirection("tag")
+   });
+ }
+ if(tab==="entity"){
+   state.lastLearningAction={kind:"find-entity"};
+   state.drillEvidence=state.drillEvidence||{};
+   state.drillEvidence.findEntityTried=true;
+   return alert("No matching entity found in this training document.");
+ }
+ state.lastLearningAction={kind:"find-pi"};
+ state.drillEvidence=state.drillEvidence||{};
+ state.drillEvidence.findPiTried=true;
+ alert("No matching processing instruction found in this training document.");
+}
+
+function flattenSearchNodes(nodes=state.model?.nodes||[],out=[]){
+ for(const n of nodes){
+   out.push(n);
+   if(n.children)flattenSearchNodes(n.children,out);
+ }
+ return out;
+}
+
+function orderedSearchNodes(direction="down"){
+ const flat=flattenSearchNodes();
+ if(!flat.length)return [];
+ const idx=Math.max(-1,flat.findIndex(n=>n.id===state.selectedId));
+ if(direction==="up"){
+   const before=flat.slice(0,idx).reverse();
+   const after=flat.slice(idx+1).reverse();
+   return [...before,...after];
+ }
+ return [...flat.slice(idx+1),...flat.slice(0,Math.max(0,idx+1))];
+}
+
+function textMatches(haystack,needle,{matchCase=false,matchPatterns=false}={}){
+ const h=String(haystack??""),n=String(needle??"");
+ if(matchPatterns){
+   try{return new RegExp(n,matchCase?"":"i").test(h)}catch(e){return false}
+ }
+ return matchCase?h.includes(n):h.toLowerCase().includes(n.toLowerCase());
+}
+
+function nodeSearchText(n,matchMarkup=false){
+ let text=n.text||"";
+ if(n.rows)text+=" "+n.rows.flat().join(" ");
+ if(matchMarkup){
+   const attrs=n.attrs?Object.entries(n.attrs).map(([k,v])=>` ${k}="${v}"`).join(""):"";
+   text=`<${n.type}${attrs}> ${text} </${n.type}>`;
+ }
+ return text;
+}
+
+function findTextNode(q,options={}){
+ return orderedSearchNodes(options.direction).find(n=>textMatches(nodeSearchText(n,options.matchMarkup),q,options))||null;
+}
+
+function selectFindHit(node,kind="text"){
+ state.selectedId=node.id;state.rootSelected=false;
+ renderAuthor();renderTree();revealSelectedInEditor();
+ const el=$(`.xml-node[data-id="${CSS.escape(node.id)}"] .node-content`)||$(`.xml-node[data-id="${CSS.escape(node.id)}"]`);
+ if(el){el.classList.add("find-hit");setTimeout(()=>el.classList.remove("find-hit"),1800)}
+ if($("#cursorStatus"))$("#cursorStatus").textContent=kind==="tag"?`Found <${node.type}>`:`Find hit in <${node.type}>`;
+}
+
+function replaceCurrentFind(){
+ const q=($("#findText")?.value||"").trim(),r=$("#replaceText")?.value||"";
+ if(!q)return;
+ const options={
+   matchCase:!!$("#findMatchCase")?.checked,
+   matchPatterns:!!$("#findMatchPatterns")?.checked,
+   matchMarkup:!!$("#findMatchMarkup")?.checked,
+   direction:dialogDirection("text")
+ };
+ const node=findTextNode(q,options);
+ if(!node)return alert("Text not found.");
+ if(options.matchMarkup)return alert("Trainer note: replacing markup is not implemented. Use Find Tag/Attribute or Change Markup.");
+ if(typeof node.text!=="string")return;
+ pushUndo("Find/Replace");
+ if(options.matchPatterns){
+   try{node.text=node.text.replace(new RegExp(q,options.matchCase?"":"i"),r)}catch(e){return alert("Invalid pattern.")}
+ }else if(options.matchCase){
+   node.text=node.text.replace(q,r);
+ }else{
+   const i=node.text.toLowerCase().indexOf(q.toLowerCase());
+   if(i>=0)node.text=node.text.slice(0,i)+r+node.text.slice(i+q.length);
+ }
+ markDirty();renderAuthor();renderTree();syncSourcePassive();
+ state.lastFindText={query:q,replace:r,...options};
+ state.lastLearningAction={kind:"replace-text"};
+ selectFindHit(node,"text");
+}
+
+function replaceAllTextFind(){
+ const q=$("#findText")?.value||"",r=$("#replaceText")?.value||"";
+ if(!q)return;
+ const matchCase=!!$("#findMatchCase")?.checked;
+ const patterns=!!$("#findMatchPatterns")?.checked;
+ const matchMarkup=!!$("#findMatchMarkup")?.checked;
+ if(matchMarkup)return alert("Trainer note: Replace All with Match Markup is not implemented.");
+ let count=0;
+ pushUndo("Replace All");
+ const replaceValue=(value)=>{
+   if(typeof value!=="string")return value;
+   if(patterns){
+     try{
+       const re=new RegExp(q,matchCase?"g":"gi");
+       const next=value.replace(re,()=>{count++;return r});
+       return next;
+     }catch(e){return value}
+   }
+   if(matchCase){
+     const parts=value.split(q);if(parts.length>1)count+=parts.length-1;return parts.join(r);
+   }
+   const re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"gi");
+   return value.replace(re,()=>{count++;return r});
+ };
+ const walk=(nodes)=>{
+   (nodes||[]).forEach(n=>{
+     if(typeof n.text==="string")n.text=replaceValue(n.text);
+     if(n.rows)n.rows=n.rows.map(row=>row.map(replaceValue));
+     if(n.children)walk(n.children);
+   });
+ };
+ walk(state.model.nodes);
+ renderAuthor();renderTree();markDirty();syncSourcePassive();
+ state.history.unshift(hist(`Replace all: ${q} → ${r}`));
+ state.lastFindText={query:q,replace:r,matchCase,matchPatterns:patterns,matchMarkup:false,direction:dialogDirection("text")};
+ state.lastLearningAction={kind:"replace-all"};
+ toast(`Replaced ${count} occurrence(s)`);
+}
+
+function normalizeTagQuery(tag){
+ let t=String(tag||"").trim();
+ t=t.replace(/^<\/?/,"").replace(/>$/,"").trim();
+ return t;
+}
+
+function findTagAttribute(tag,attr,value,options={}){
+ const wantedTag=normalizeTagQuery(tag);
+ const exact=options.exact!==false,matchCase=!!options.matchCase,patterns=!!options.patterns;
+ const cmp=(actual,wanted)=>{
+   const a=String(actual??""),w=String(wanted??"");
+   if(!w)return true;
+   if(patterns){try{return new RegExp(w,matchCase?"":"i").test(a)}catch(e){return false}}
+   if(exact)return matchCase?a===w:a.toLowerCase()===w.toLowerCase();
+   return matchCase?a.includes(w):a.toLowerCase().includes(w.toLowerCase());
+ };
+ const ordered=orderedSearchNodes(options.direction||"down");
+ const hit=ordered.find(n=>{
+   if(wantedTag&&!cmp(n.type,wantedTag))return false;
+   if(!attr)return true;
+   const attrs={...(n.attrs||{})};
+   if(n.xmlId&&!attrs.id)attrs.id=n.xmlId;
+   if(!(attr in attrs))return false;
+   return !value||cmp(attrs[attr],value);
+ });
+ if(!hit)return alert("No matching tag/attribute found.");
+ selectFindHit(hit,"tag");
+ state.lastFindTag={tag:wantedTag,attr,value,...options};
+ state.lastLearningAction={kind:"find-tag"};
+ state.drillEvidence=state.drillEvidence||{};
+ state.drillEvidence.findTagHit=true;
+ state.drillEvidence.findTagName=hit.type;
+ state.drillEvidence.findTab="tag";
+ return hit;
+}
+
+function showFindTagAttribute(){showFindReplace("tag")}
+function showFindEntity(){showFindReplace("entity")}
+function showFindProcessingInstruction(){showFindReplace("pi")}
+
+function findAgain(){
+ if(state.lastFindTag)return findTagAttribute(state.lastFindTag.tag,state.lastFindTag.attr,state.lastFindTag.value,state.lastFindTag);
+ if(state.lastFindText){
+   const hit=findTextNode(state.lastFindText.query,state.lastFindText);
+   if(hit){selectFindHit(hit,"text");return}
+   return alert("Text not found.");
+ }
+ toast("Nothing to find again");
+}
+
 function findFirstNodeContaining(q){
   let found=null;
   function walk(nodes){
@@ -1843,12 +2155,15 @@ function showContextInfo(){const s=currentSelectionContext(),ic=insertionContext
 function showDocumentTypeViewer(){const current=currentSelectionContext();const rows=Object.entries(schema).map(([p,c])=>`<div class="${(current.kind==="root"?"mainProcedure":current.node.type)===p?"ctx":""}">&lt;${esc(p)}&gt; → ${c.length?c.map(x=>`&lt;${esc(x)}&gt;`).join(", "):"text / leaf"}</div>`).join("");showModal("Document Type Viewer",`<div class="dtd-viewer">${rows}</div><p class="menu-note">Training schema view. In Arbortext, Document Type Viewer exposes the document structure and helps insert markup at valid locations.</p>`);state.lastLearningAction={kind:"doctype-viewer"};
  state.drillEvidence=state.drillEvidence||{};state.drillEvidence.doctypeOpened=true}
 function showShortcutReference(){showModal("Keyboard Shortcuts",`<div class="dtd-viewer"><b>Editing</b><br>Ctrl+Z Undo · Ctrl+Y Redo · Ctrl+S Save · Ctrl+F Find/Replace · Ctrl+D Modify Attributes<br><br><b>Markup</b><br>Enter Quick Tags · Ctrl+M Insert Markup list · Ctrl+Shift+M Insert Markup dialog<br><br><b>Views</b><br>Ctrl+Shift+L cycle tag display · Alt+Ctrl+O Document Map · Alt+Ctrl+N Normal · Ctrl+L Refresh · F6 cycle focus<br><br><b>Table</b><br>Alt+Shift+T Insert Table</div><p class="menu-note">These are based on PTC Arbortext Editor default mappings. The trainer implements the subset that maps cleanly to this browser simulation.</p>`)}
-function findAgain(){if(state.lastFindTag)return findTagAttribute(state.lastFindTag.tag,state.lastFindTag.attr,state.lastFindTag.value);if(state.lastFindText){showFindReplace();return}toast("Nothing to find again")}
-function showFindTagAttribute(){showModal("Find Tag/Attribute",`<div class="form-grid"><label>Tag Name</label><input id="findTagName" placeholder="para"><label>Attribute</label><input id="findAttrName" placeholder="applicRefId"><label>Value</label><input id="findAttrValue" placeholder="APP-01"></div>`,`<button class="btn" data-close>Cancel</button><button class="btn accent" id="findTagNext">Find Next</button>`);$("#findTagNext").onclick=()=>findTagAttribute($("#findTagName").value.trim(),$("#findAttrName").value.trim(),$("#findAttrValue").value.trim());state.lastLearningAction={kind:"find-tag-dialog"};
- state.drillEvidence=state.drillEvidence||{};state.drillEvidence.findTagDialogOpened=true}
-function findTagAttribute(tag,attr,value){const flat=[];const walk=nodes=>nodes.forEach(n=>{flat.push(n);if(n.children)walk(n.children)});walk(state.model?.nodes||[]);const start=Math.max(0,flat.findIndex(n=>n.id===state.selectedId)+1);const ordered=[...flat.slice(start),...flat.slice(0,start)];const hit=ordered.find(n=>(!tag||n.type===tag)&&(!attr||String(n.attrs?.[attr]??n.xmlId??"").includes(value||"")));if(!hit)return alert("No matching tag/attribute found.");state.selectedId=hit.id;state.rootSelected=false;renderAuthor();renderTree();revealSelectedInEditor();state.lastFindTag={tag,attr,value};state.lastLearningAction={kind:"find-tag"};
- state.drillEvidence=state.drillEvidence||{};state.drillEvidence.findTagHit=true;
- $("#modalBackdrop")?.classList.add("hidden")}
+
+function findElementBoundary(which){
+ const r=getNodeById(state.selectedId);
+ if(!r)return alert("Select an element first.");
+ revealSelectedInEditor();
+ state.lastLearningAction={kind:"find-boundary",which};
+ if($("#cursorStatus"))$("#cursorStatus").textContent=`Element ${which}: <${r.node.type}>`;
+ $("#modalBackdrop")?.classList.add("hidden");
+}
 function showChangeMarkup(){const r=getNodeById(state.selectedId);if(!r)return alert("Select an element first.");const parent=r.parent?.type||"mainProcedure",allowed=(schema[parent]||[]).filter(t=>t!==r.node.type);showModal("Change Markup",`<p>Current: <strong>&lt;${esc(r.node.type)}&gt;</strong></p><select id="changeMarkupSelect">${allowed.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join("")}</select>`,`<button class="btn" data-close>Cancel</button><button class="btn accent" id="applyChangeMarkup">Change</button>`);$("#applyChangeMarkup").onclick=()=>{const t=$("#changeMarkupSelect").value;if(!t)return;pushUndo(`Change markup ${r.node.type} → ${t}`);r.node.type=t;if(!schema[t]?.length)delete r.node.children;renderAuthor();renderTree();refreshInsertOptions();syncSourcePassive();$("#modalBackdrop").classList.add("hidden");state.lastLearningAction={kind:"change-markup"};
  state.drillEvidence=state.drillEvidence||{};state.drillEvidence.changeMarkupApplied=true;
  toast("Markup changed")}}
@@ -2923,7 +3238,7 @@ document.addEventListener("keydown",e=>{
  const k=e.key.toLowerCase(),mod=e.ctrlKey||e.metaKey;
  if(mod&&e.shiftKey&&k==="l"){e.preventDefault();return cycleTagMode()}
  if(mod&&k==="s"){e.preventDefault();noteShortcut("save");return saveLocal()}
- if(mod&&k==="f"&&!e.shiftKey){e.preventDefault();noteShortcut("find");return showFindReplace()}
+ if(mod&&k==="f"&&!e.shiftKey){e.preventDefault();noteShortcut("find");return showFindReplace("text")}
  if(mod&&e.shiftKey&&k==="f"){e.preventDefault();return findAgain()}
  if(mod&&k==="d"){e.preventDefault();noteShortcut("modify-attributes");return showModifyAttributes()}
  if(mod&&k==="m"&&!e.shiftKey){if(e.ctrlKey&&!e.metaKey)return; e.preventDefault();return focusInsertMarkup()}

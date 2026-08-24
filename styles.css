@@ -762,3 +762,76 @@ button:disabled{opacity:.45;cursor:not-allowed}
 /* v7.6 shortcut reliability */
 .insert-markup-title{display:flex;justify-content:space-between;align-items:center}
 .insert-markup-title span{font-size:10px;font-weight:400;color:#666}
+
+
+/* v7.14 Arbortext-like Find/Replace dialog */
+.arb-find-dialog{font-size:12px}
+.arb-find-tabs{
+  display:flex;
+  gap:0;
+  border-bottom:1px solid #8f8f8f;
+  margin:-4px -4px 12px -4px;
+}
+.arb-find-tab{
+  border:1px solid #aaa;
+  border-bottom:0;
+  background:#dedede;
+  padding:7px 10px;
+  font-size:11px;
+  cursor:pointer;
+  margin-right:2px;
+}
+.arb-find-tab.active{
+  background:#fff;
+  font-weight:700;
+  position:relative;
+  top:1px;
+}
+.arb-find-panel{display:none}
+.arb-find-panel.active{display:block}
+.arb-find-grid{
+  display:grid;
+  grid-template-columns:145px minmax(260px,1fr);
+  gap:8px 10px;
+  align-items:center;
+  margin-bottom:10px;
+}
+.arb-find-grid input,.arb-find-grid select{
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  padding:5px 6px;
+  border:1px solid #aaa;
+  background:#fff;
+}
+.arb-find-group{
+  border:1px solid #aaa;
+  padding:8px 10px;
+  margin:8px 0;
+  background:#f7f7f7;
+}
+.arb-find-group legend{
+  padding:0 5px;
+  font-size:11px;
+  font-weight:700;
+}
+.arb-find-group label{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  margin-right:16px;
+}
+.arb-direction{display:flex;align-items:center;gap:8px}
+.arb-direction legend{margin-right:4px}
+.arb-find-file-entities{margin-left:auto!important}
+.modal:has(.arb-find-dialog){width:min(720px,94vw)}
+.modal:has(.arb-find-dialog) .modal-actions button:disabled{
+  opacity:.45;
+  cursor:default;
+}
+@media(max-width:760px){
+  .arb-find-tabs{flex-wrap:wrap}
+  .arb-find-grid{grid-template-columns:1fr}
+  .arb-direction{flex-wrap:wrap}
+  .arb-find-file-entities{margin-left:0!important}
+}

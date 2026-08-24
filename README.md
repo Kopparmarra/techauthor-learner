@@ -700,3 +700,16 @@ Researched against PTC Arbortext Editor 8.3 documentation and adjusted the train
 - findtag requires an actual Find Next hit
 - fixcomplete requires cmd present and completeness run (any order)
 - changemarkup requires a real type change
+
+## v7.14 — Arbortext-like Find/Replace
+
+The trainer now models Arbortext's Find/Replace workflow as one tabbed dialog:
+- Find/Replace
+- Find Tag/Attribute
+- Find Entity
+- Find Processing Instruction
+
+Find/Replace includes Find What, Replace With, Match Markup, Match Case, Match Patterns and Up/Down direction.
+Find Tag/Attribute includes Tag Name, Attribute Name, Attribute Value, search options and direction.
+
+The Find menu now opens the appropriate tab instead of using unrelated dialogs, and the Beginner Drills were updated to teach this workflow. Structural-find drills verify that the requested tag was actually found.
