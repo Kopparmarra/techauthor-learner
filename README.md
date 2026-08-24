@@ -727,3 +727,10 @@ The Find menu now opens the appropriate tab instead of using unrelated dialogs, 
 - Reworked Document Type Viewer into an Arbortext-inspired hierarchy view.
 - Added element selection plus Find Forward, Find Backward, Update Display and context-valid Insert actions.
 - Kept the viewer intentionally compact so it supports learning without adding another dense editor panel.
+
+
+## v7.17 — Document Type Viewer insertion state
+
+- Insert is now enabled only when the selected element type is valid at the current insertion location.
+- Invalid insertions are shown with a disabled grey button instead of an active accent button.
+- Viewer selection remains highlighted after Update Display / Find navigation.

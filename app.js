@@ -2165,6 +2165,14 @@ function documentTypeTreeRows(){
  }
  return branch("mainProcedure",0);
 }
+function updateDocumentTypeViewerInsertState(){
+ const btn=$("#dtdInsert");if(!btn)return;
+ const type=state.dtdViewerType;
+ const allowed=!!type&&validElementsForInsertion(currentInsertPosition()).includes(type);
+ btn.disabled=!allowed;
+ btn.classList.toggle("accent",allowed);
+ btn.title=allowed?`Insert <${type}> at the current location`:`<${type||"element"}> is not valid at the current insertion location`;
+}
 function updateDocumentTypeViewerDisplay(){
  const tree=$("#dtdTree");if(!tree)return;
  tree.innerHTML=documentTypeTreeRows();
@@ -2172,6 +2180,8 @@ function updateDocumentTypeViewerDisplay(){
  const current=currentSelectionContext();
  const label=$("#dtdCurrentContext");
  if(label)label.textContent=current.kind==="root"?"mainProcedure":current.node.type;
+ const active=$(`[data-dtd-type="${state.dtdViewerType}"]`);if(active)active.classList.add("dtd-picked");
+ updateDocumentTypeViewerInsertState();
 }
 function bindDocumentTypeViewerRows(){
  $$("[data-dtd-type]").forEach(row=>row.onclick=()=>{
@@ -2179,6 +2189,7 @@ function bindDocumentTypeViewerRows(){
    row.classList.add("dtd-picked");
    state.dtdViewerType=row.dataset.dtdType;
    const picked=$("#dtdPickedType");if(picked)picked.textContent=`<${state.dtdViewerType}>`;
+   updateDocumentTypeViewerInsertState();
  });
 }
 function findDocumentTypeFromViewer(direction=1){
@@ -2219,6 +2230,7 @@ function showDocumentTypeViewer(){
    <p class="menu-note">Arbortext-style training view: inspect the document type hierarchy, find elements in the document, and insert the selected element when it is valid at the current location.</p>`);
  bindDocumentTypeViewerRows();
  const active=$(`[data-dtd-type="${state.dtdViewerType}"]`);if(active)active.classList.add("dtd-picked");
+ updateDocumentTypeViewerInsertState();
  $("#dtdFindBack").onclick=()=>findDocumentTypeFromViewer(-1);
  $("#dtdFindForward").onclick=()=>findDocumentTypeFromViewer(1);
  $("#dtdUpdate").onclick=updateDocumentTypeViewerDisplay;
