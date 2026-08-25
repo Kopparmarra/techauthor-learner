@@ -766,3 +766,8 @@ The check also now adds lightweight document-type checks for invalid element pla
 - Reworded the BREX drill to remove the misleading phrase “S1000D layer”.
 - The drill now says: open the BREX Rules tab, inspect the active project rules, return to Learning, then click Check.
 - Added version query strings to local CSS/JS assets in `index.html` (`?v=7.21`) so GitHub Pages/browser caches are much less likely to serve stale drill logic after an update.
+
+## v7.22 — BREX drill wording
+- Drill 18 now says: “Switch the active Project BREX profile to Balanced.”
+- Drill 19 now says: “Switch the active Project BREX profile back to Strict.”
+- Asset cache-busting version updated to v7.22.
