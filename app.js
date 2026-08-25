@@ -2167,10 +2167,19 @@ function findElementBoundary(which){
 function showChangeMarkup(){const r=getNodeById(state.selectedId);if(!r)return alert("Select an element first.");const parent=r.parent?.type||"mainProcedure",allowed=(schema[parent]||[]).filter(t=>t!==r.node.type);showModal("Change Markup",`<p>Current: <strong>&lt;${esc(r.node.type)}&gt;</strong></p><select id="changeMarkupSelect">${allowed.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join("")}</select>`,`<button class="btn" data-close>Cancel</button><button class="btn accent" id="applyChangeMarkup">Change</button>`);$("#applyChangeMarkup").onclick=()=>{const t=$("#changeMarkupSelect").value;if(!t)return;pushUndo(`Change markup ${r.node.type} → ${t}`);r.node.type=t;if(!schema[t]?.length)delete r.node.children;renderAuthor();renderTree();refreshInsertOptions();syncSourcePassive();$("#modalBackdrop").classList.add("hidden");state.lastLearningAction={kind:"change-markup"};
  state.drillEvidence=state.drillEvidence||{};state.drillEvidence.changeMarkupApplied=true;
  toast("Markup changed")}}
-function checkCompleteness(){const issues=validate();const hasErr=issues.some(i=>i.type==="err"),s=$("#completenessStatus");if(s){s.textContent=hasErr?"INC":"CMP";s.classList.toggle("incomplete",hasErr);s.classList.toggle("active",!hasErr)};state.lastLearningAction={kind:"completeness"};
+function checkCompleteness(){
+ const issues=validate();
+ const hasErr=issues.some(i=>i.type==="err"),s=$("#completenessStatus");
+ if(s){
+   s.textContent=hasErr?"INC":"CMP";
+   s.classList.toggle("incomplete",hasErr);
+   s.classList.toggle("active",!hasErr);
+ }
+ state.lastLearningAction={kind:"completeness"};
  state.drillEvidence=state.drillEvidence||{};
  state.drillEvidence.completenessRan=true;
  state.drillEvidence.completenessCount=(state.drillEvidence.completenessCount||0)+1;
+
  if(!hasErr){
    const status=$("#cursorStatus");
    if(status){
@@ -2184,7 +2193,20 @@ function checkCompleteness(){const issues=validate();const hasErr=issues.some(i=
    }
    return;
  }
- const body=`<div class="completeness-log">${issues.map((i,n)=>`<div class="issue" data-complete-index="${n}"><strong>${esc(i.label)}</strong><br>${esc(i.msg)}</div>`).join("")}</div>`;showModal("Completeness Check Log",body);$$('[data-complete-index]').forEach(b=>b.ondblclick=()=>{$("#modalBackdrop").classList.add("hidden");showRightTab("validation")})}
+
+ showModal("Completeness Check Log",renderCompletenessLog(issues));
+ $$("[data-complete-index]").forEach(row=>{
+   row.ondblclick=()=>{
+     const id=row.dataset.nodeId;
+     if(id&&getNodeById(id)){
+       state.selectedId=id;state.rootSelected=false;
+       renderAuthor();renderTree();revealSelectedInEditor();
+     }
+     $("#modalBackdrop").classList.add("hidden");
+     showRightTab("validation");
+   };
+ });
+}
 function refreshEditorScreen(){renderAuthor();renderTree();noteShortcut("refresh");$("#cursorStatus").textContent="Screen refreshed"}
 function cycleFocus(){const targets=[$("#authorEditor"),$("#contentTree"),$("#elementSelect")].filter(Boolean);state.focusCycleIndex=(state.focusCycleIndex+1)%targets.length;targets[state.focusCycleIndex].focus?.();noteShortcut("focus");$("#cursorStatus").textContent=["Edit view","Document Map","Markup toolbar"][state.focusCycleIndex]||"Focus changed"}
 function changeMagnification(delta){state.zoomLevel=Math.max(-1,Math.min(1,(state.zoomLevel||0)+delta));const e=$("#authorEditor");e?.classList.toggle("zoom-up",state.zoomLevel>0);e?.classList.toggle("zoom-down",state.zoomLevel<0);state.lastLearningAction={kind:"shortcut",name:delta>0?"zoom-in":"zoom-out"}}
@@ -2805,6 +2827,141 @@ function setMode(mode){
 }
 
 
+
+function collectCompletenessStructureIssues(){
+ const out=[];
+ if(!state.model)return out;
+
+ const add=(category,type,label,msg,nodeId=null)=>out.push({category,type,label,msg,nodeId});
+ const allowedAttrsFor=(type)=>(attributeSchemas[type]||[]).map(a=>a.name);
+
+ function walk(nodes,parentType="mainProcedure"){
+   (nodes||[]).forEach((n,index)=>{
+     const allowed=schema[parentType]||[];
+     if(!allowed.includes(n.type)){
+       add("Markup","err","Invalid element placement",
+         `<${n.type}> is not permitted inside <${parentType}>.`,n.id);
+     }
+
+     const def=attributeSchemas[n.type]||[];
+     const attrs=n.attrs||{};
+     def.filter(a=>a.required).forEach(a=>{
+       const val=attrs[a.name];
+       if(val==null||String(val).trim()==="")
+         add("Attributes","err","Required attribute",
+           `<${n.type}> is missing required attribute ${a.name}.`,n.id);
+     });
+
+     Object.keys(attrs).forEach(name=>{
+       if(!allowedAttrsFor(n.type).includes(name)){
+         add("Attributes","err","Invalid attribute",
+           `Attribute ${name} is not defined for <${n.type}> in the training schema.`,n.id);
+       }
+       const a=def.find(x=>x.name===name);
+       if(a?.values?.length && String(attrs[name]||"") && !a.values.includes(String(attrs[name]))){
+         add("Attributes","err","Invalid attribute value",
+           `${name}="${attrs[name]}" is not an allowed value on <${n.type}>.`,n.id);
+       }
+     });
+
+     const leafTypes=["title","sectionTitle","para","warning","note","cmd","codeblock"];
+     if(leafTypes.includes(n.type) && !String(n.text||"").trim()){
+       add("Empty elements","err","Empty element",
+         `<${n.type}> has no content.`,n.id);
+     }
+
+     if(n.type==="table" && Array.isArray(n.rows) && n.rows.length){
+       const cols=n.rows[0]?.length||0;
+       if(!cols || n.rows.some(r=>r.length!==cols)){
+         add("Table markup","err","Table structure",
+           "Table rows do not contain a consistent number of cells.",n.id);
+       }
+     }
+
+     if(n.children)walk(n.children,n.type);
+   });
+ }
+ walk(state.model.nodes,"mainProcedure");
+
+ // Duplicate explicit XML IDs / id attributes.
+ const seen=new Map();
+ const flat=[];
+ const flatten=nodes=>(nodes||[]).forEach(n=>{flat.push(n);if(n.children)flatten(n.children)});
+ flatten(state.model.nodes);
+ flat.forEach(n=>{
+   const explicit=(n.attrs?.id||n.xmlId||"").trim?.()||"";
+   if(!explicit)return;
+   if(seen.has(explicit)){
+     add("IDs & references","err","Duplicate ID",
+       `ID "${explicit}" is used more than once. IDs must be unique.`,n.id);
+   }else seen.set(explicit,n.id);
+ });
+
+ return out;
+}
+
+function completenessCategory(issue){
+ if(issue.category)return issue.category;
+ const label=String(issue.label||"");
+ const msg=String(issue.msg||"");
+ if(/^STE\b/i.test(label))return "Language / STE";
+ if(/^References\b/i.test(label))return "IDs & references";
+ if(/^Workflow\b/i.test(label))return "Workflow";
+ if(/^BREX\b/i.test(label)){
+   if(/required|must contain|exactly one|at least one|missing/i.test(msg))return "Completeness";
+   if(/classification|applicability|issue number/i.test(msg))return "Metadata / BREX";
+   return "Project / BREX";
+ }
+ return issue.type==="info"?"Information":"Other";
+}
+
+function completenessCategoryHelp(category){
+ const help={
+  "Completeness":"Required content is missing or the document is not structurally complete.",
+  "Markup":"An element is in a location that the document type does not permit.",
+  "Attributes":"A required attribute is missing, unknown, or has an invalid value.",
+  "IDs & references":"An ID is duplicated or a reference/identifier cannot be resolved.",
+  "Empty elements":"An element that should contain content is empty.",
+  "Table markup":"The table structure is incomplete or inconsistent.",
+  "Metadata / BREX":"Required project metadata or applicability does not satisfy the active BREX profile.",
+  "Project / BREX":"A project-specific business rule is not satisfied.",
+  "Language / STE":"A language/style rule needs attention; this is separate from XML structural validity.",
+  "Workflow":"The document state conflicts with the current edit state.",
+  "Information":"Informational result; it does not make the document incomplete.",
+  "Other":"Another enabled validation rule reported an issue."
+ };
+ return help[category]||help.Other;
+}
+
+function renderCompletenessLog(issues){
+ const order=["Completeness","Markup","Attributes","IDs & references","Empty elements","Table markup","Metadata / BREX","Project / BREX","Language / STE","Workflow","Information","Other"];
+ const grouped={};
+ issues.forEach((issue,index)=>{
+   const cat=completenessCategory(issue);
+   (grouped[cat]||(grouped[cat]=[])).push({issue,index});
+ });
+ return `<div class="completeness-summary">
+   <strong>${issues.filter(i=>i.type==="err").length} error(s)</strong>
+   <span>${issues.filter(i=>i.type==="warn").length} warning(s)</span>
+   <span>${issues.filter(i=>i.type==="info").length} info</span>
+ </div>
+ <div class="completeness-log grouped">
+ ${order.filter(cat=>grouped[cat]?.length).map(cat=>`
+   <section class="completeness-category">
+    <div class="completeness-category-head">
+      <strong>${esc(cat)}</strong>
+      <span>${grouped[cat].length}</span>
+    </div>
+    <div class="completeness-category-help">${esc(completenessCategoryHelp(cat))}</div>
+    ${grouped[cat].map(({issue,index})=>`
+      <div class="issue ${issue.type}" data-complete-index="${index}" data-node-id="${esc(issue.nodeId||"")}">
+       <div class="completeness-issue-label"><span class="severity">${issue.type==="err"?"ERROR":issue.type==="warn"?"WARNING":"INFO"}</span> <strong>${esc(issue.label)}</strong></div>
+       <div>${esc(issue.msg)}</div>
+      </div>`).join("")}
+   </section>`).join("")}
+ </div>`;
+}
+
 function validate(){
  state.lastLearningAction={kind:"validate"};
  if(!state.model){
@@ -2814,6 +2971,9 @@ function validate(){
  const issues=[],m=state.model.meta;
  const text=flattenText(state.model.nodes);
  const profile=activeBrexProfile();
+
+ // Document-type completeness checks (schema/markup/attributes/IDs/tables).
+ issues.push(...collectCompletenessStructureIssues());
 
  if($("#structureToggle").checked){
    profile.rules.forEach(rule=>{

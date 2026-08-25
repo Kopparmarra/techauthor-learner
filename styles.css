@@ -848,3 +848,70 @@ button:disabled{opacity:.45;cursor:not-allowed}
   border-color:#6f9d73 !important;
   font-weight:700 !important;
 }
+
+
+/* v7.16 pedagogical Completeness Check Log */
+.completeness-summary{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  padding:8px 10px;
+  margin-bottom:10px;
+  border:1px solid #b9b9b9;
+  background:#fff;
+  font-size:11px;
+}
+.completeness-log.grouped{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.completeness-category{
+  border:1px solid #b9b9b9;
+  background:#fff;
+}
+.completeness-category-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:7px 9px;
+  background:#dedede;
+  border-bottom:1px solid #b9b9b9;
+  font-size:12px;
+}
+.completeness-category-head span{
+  min-width:20px;
+  padding:1px 6px;
+  text-align:center;
+  border:1px solid #aaa;
+  background:#f5f5f5;
+}
+.completeness-category-help{
+  padding:7px 9px;
+  background:#f7f7f7;
+  border-bottom:1px solid #d4d4d4;
+  color:#555;
+  font-size:11px;
+}
+.completeness-category .issue{
+  padding:8px 9px;
+  border-bottom:1px solid #e1e1e1;
+  cursor:default;
+}
+.completeness-category .issue:last-child{border-bottom:0}
+.completeness-category .issue:hover{background:#fff9dc}
+.completeness-category .issue.err{border-left:4px solid #9d2b2b}
+.completeness-category .issue.warn{border-left:4px solid #9a6a00}
+.completeness-category .issue.info{border-left:4px solid #65717a}
+.completeness-issue-label{margin-bottom:3px}
+.completeness-issue-label .severity{
+  display:inline-block;
+  min-width:54px;
+  margin-right:5px;
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.04em;
+}
+.completeness-category .issue.err .severity{color:#8e1f1f}
+.completeness-category .issue.warn .severity{color:#855d00}
+.completeness-category .issue.info .severity{color:#56636d}

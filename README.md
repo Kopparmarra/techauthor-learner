@@ -719,3 +719,21 @@ The Find menu now opens the appropriate tab instead of using unrelated dialogs, 
 - `No completeness errors found` appears in bold dark green in the status bar for 2 seconds.
 - The `CMP` indicator receives a matching subtle green highlight for 2 seconds.
 - Both then return to their normal appearance.
+
+## v7.16 — Pedagogical Completeness Check Log
+Check Completeness now groups findings by what they mean rather than showing one flat list:
+- Completeness
+- Markup
+- Attributes
+- IDs & references
+- Empty elements
+- Table markup
+- Metadata / BREX
+- Project / BREX
+- Language / STE
+- Workflow
+- Information
+
+Each group includes a short explanation. Errors, warnings and informational findings are visually distinguished. Double-clicking a result that is tied to a document node selects/reveals that element before opening the validation panel.
+
+The check also now adds lightweight document-type checks for invalid element placement, empty leaf elements, invalid/required attributes, duplicate explicit IDs and inconsistent table rows.
