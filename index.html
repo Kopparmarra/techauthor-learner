@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>TechAuthor Learner v7.14</title>
-  <link rel="stylesheet" href="styles.css?v=7.26">
+  <link rel="stylesheet" href="styles.css?v=7.27">
 </head>
 <body>
 <div id="app">
@@ -13,7 +13,7 @@
       <div class="brand-mark">TA</div>
       <div>
         <div class="brand-title">TechAuthor Learner</div>
-        <div class="brand-subtitle">Arbortext-like structured authoring trainer · v7.26</div>
+        <div class="brand-subtitle">Arbortext-like structured authoring trainer · v7.27</div>
       </div>
     </div>
     <div class="project-strip">
@@ -294,6 +294,7 @@
       <button id="beginnerDrillsBtn" class="learn-tab active">Beginner Drills</button>
       <button id="arbortextBasicsBtn" class="learn-tab">Arbortext Basics</button>
       <button id="structuredPracticeBtn" class="learn-tab">S1000D Practice</button>
+      <button id="scenarioPracticeBtn" class="learn-tab">Scenario Practice</button>
       <button id="elementCoachBtn" class="learn-tab">Element Coach</button>
     </div>
 
@@ -363,6 +364,25 @@
       <div id="guidedScore"></div>
     </div>
 
+
+    <div id="scenarioPracticeView" class="learning-view hidden">
+      <div class="learning-context-card scenario-intro">
+        <strong>Scenario Practice</strong>
+        Realistic authoring tasks with no step-by-step instructions. Diagnose the DM, choose your own tools, and satisfy the hidden acceptance criteria.
+      </div>
+      <label class="practice-label">Scenario
+        <select id="scenarioSelect"></select>
+      </label>
+      <div id="scenarioCard" class="learning-card scenario-card"></div>
+      <div class="scenario-actions">
+        <button id="scenarioStartBtn" class="btn accent full">Load scenario</button>
+        <button id="scenarioCheckBtn" class="btn full hidden">Check scenario</button>
+        <button id="scenarioHintBtn" class="btn hidden">Show hint</button>
+        <button id="scenarioNextBtn" class="btn accent hidden">Next scenario</button>
+      </div>
+      <div id="scenarioFeedback"></div>
+    </div>
+
     <div id="elementCoachView" class="learning-view hidden">
       <div id="elementCoachContent"></div>
     </div>
@@ -387,8 +407,8 @@
 </div>
 
 <!-- Load order: pure data → drills curriculum → application runtime (no bundler). -->
-<script src="js/schema.js?v=7.26"></script>
-<script src="js/drills.js?v=7.26"></script>
-<script src="app.js?v=7.26"></script>
+<script src="js/schema.js?v=7.27"></script>
+<script src="js/drills.js?v=7.27"></script>
+<script src="app.js?v=7.27"></script>
 </body>
 </html>

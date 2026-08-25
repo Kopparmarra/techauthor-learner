@@ -978,3 +978,30 @@ button:disabled{opacity:.45;cursor:not-allowed}
 #learningTab.right-tab-content{
   overflow-x:hidden;
 }
+
+
+/* v7.27 Scenario Practice */
+.learning-switch-4{grid-template-columns:repeat(5,1fr)}
+.scenario-intro{line-height:1.35}
+.scenario-card h4{font-size:14px;margin:7px 0 9px}
+.scenario-head{display:flex;justify-content:space-between;gap:8px;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:#6c7074;font-weight:800}
+.scenario-level{background:#eee;border:1px solid #ccc;padding:2px 5px;border-radius:8px;color:#555}
+.scenario-section{border-top:1px solid #ddd;padding-top:7px;margin-top:7px}
+.scenario-section strong{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:#666}
+.scenario-section p{margin:4px 0 0;font-size:11px;line-height:1.35}
+.scenario-section.task{background:#fff7cf;border:1px solid #dec55d;padding:8px;margin-top:9px}
+.scenario-section.task strong{color:#735e00}
+.scenario-complete-badge{margin-top:8px;font-weight:700;color:#2e6b34}
+.scenario-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.scenario-actions .full{grid-column:1/-1}
+.scenario-status,.scenario-result,.scenario-hint{border:1px solid #c8c8c8;background:#fff;padding:8px;font-size:10px;line-height:1.35;margin-top:6px}
+.scenario-result.pass{border-left:4px solid var(--ok)}
+.scenario-result.fail{border-left:4px solid var(--danger)}
+.scenario-hint{border-left:4px solid var(--accent);background:#fff9dc}
+.scenario-attempt{margin-top:5px;color:#666}
+.scenario-criteria{margin-top:7px;border-top:1px solid #ddd;padding-top:6px;display:grid;gap:3px;color:#2e6b34}
+@media(max-width:1280px){
+ .learning-switch-4{grid-template-columns:repeat(2,1fr)!important}
+ .scenario-actions{grid-template-columns:1fr}
+ .scenario-actions .btn{width:100%;max-width:100%;box-sizing:border-box}
+}

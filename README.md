@@ -794,3 +794,20 @@ The check also now adds lightweight document-type checks for invalid element pla
 - “Return to author” now explicitly points to the same Document State controls.
 - “Check in” now explicitly points to the top-bar Check in button.
 - Added workflow-specific hints so these drills no longer rely on the generic authoring-action text.
+
+## v7.27 — Scenario Practice
+Added a fifth Learning mode: **Scenario Practice**.
+
+It contains 10 progressively harder authoring scenarios:
+1. Complete an unfinished procedure
+2. Repair imported content
+3. Update software applicability
+4. Find and update terminology
+5. Make the DM comply with Project BREX
+6. Clean up procedural language
+7. Add the correct Fault Isolation reference
+8. Implement an engineering change
+9. Prepare the DM for review
+10. Resolve a returned DM and check it in
+
+Scenario Practice deliberately does not tell the learner which buttons to press. Each scenario has a short context and a task, with hidden outcome-based acceptance criteria. On a failed check the learner sees only how many criteria remain. Hints become available after two failed attempts. On success the criteria are revealed and the scenario is marked complete in local storage.

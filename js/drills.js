@@ -544,6 +544,393 @@ function jumpToDrill(index){
 ;
 
 
+
+
+/* v7.27 Scenario Practice — outcome-based authoring tasks */
+const scenarioPractice=[
+ {
+  id:"sc1",title:"Complete an unfinished procedure",
+  level:"Foundation",
+  scenario:"A procedure was checked in before authoring was complete. Two procedural steps are unfinished and one note contains no text.",
+  task:"Complete the procedure and make the document ready to pass Check Completeness.",
+  setup:()=>({
+   nodes:[
+    {type:"title",text:"Verify software service status"},
+    {type:"para",text:"Set the system to MAINTENANCE mode before you do this procedure."},
+    {type:"sectionTitle",text:"Procedure"},
+    {type:"step",text:"Open the maintenance application.",children:[{type:"cmd",text:"Start the Radar Maintenance application."}]},
+    {type:"step",text:"Check the service status.",children:[]},
+    {type:"step",text:"Record the result.",children:[]},
+    {type:"note",text:""}
+   ],
+   meta:{title:"Verify software service status",dmc:"TRAINING-SCENARIO-01",security:"UNCLASSIFIED",issue:"001",workflow:"In Work"},
+   applicability:{expression:'product == "Surface Sensor Software"',variant:"All",swFrom:"4.0",swTo:"4.9",serial:"All serials"}
+  }),
+  criteria:[
+   ["Every step has a cmd",()=>getNodesByType("step").every(n=>(n.children||[]).some(c=>c.type==="cmd"))],
+   ["No empty note remains",()=>getNodesByType("note").every(n=>String(n.text||"").trim())],
+   ["Document has one title",()=>getNodesByType("title").length===1]
+  ],
+  hints:["Inspect the step elements in Document Map.","Check which child element a step requires.","Check Completeness is useful when you think the structure is finished."]
+ },
+ {
+  id:"sc2",title:"Repair imported content",
+  level:"Foundation",
+  scenario:"An imported XML file contains duplicate document content and unfinished markup. Context Rules did not create these errors; they arrived with the imported file.",
+  task:"Repair the imported document so that its structure is complete and unambiguous.",
+  setup:()=>({
+   nodes:[
+    {type:"title",text:"Restore network connection"},
+    {type:"title",text:"Restore network connection — old copy"},
+    {type:"para",text:"Set the system to MAINTENANCE mode."},
+    {type:"step",text:"Examine the network status.",children:[]},
+    {type:"note",text:""}
+   ],
+   meta:{title:"Restore network connection",dmc:"TRAINING-SCENARIO-02",security:"UNCLASSIFIED",issue:"001",workflow:"In Work"},
+   applicability:{expression:'product == "Surface Sensor Software"',variant:"All",swFrom:"4.0",swTo:"4.9",serial:"All serials"}
+  }),
+  criteria:[
+   ["Exactly one title remains",()=>getNodesByType("title").length===1],
+   ["The step contains a cmd",()=>getNodesByType("step").every(n=>(n.children||[]).some(c=>c.type==="cmd"))],
+   ["No empty note remains",()=>getNodesByType("note").every(n=>String(n.text||"").trim())]
+  ],
+  hints:["Imported content can contain states that normal Context Rules would prevent.","Check Completeness can tell you whether something is missing as well as whether there is too much.","Do not keep an empty element merely because it came from the source file."]
+ },
+ {
+  id:"sc3",title:"Update software applicability",
+  level:"Foundation",
+  scenario:"Engineering has restricted this procedure. It now applies only to Variant B and software versions 4.5 through 4.9.",
+  task:"Update the document applicability so it accurately represents the new configuration.",
+  setup:()=>({
+   nodes:[
+    {type:"title",text:"Install display service update"},
+    {type:"para",text:"Set the system to MAINTENANCE mode before installation."},
+    {type:"step",text:"Install the approved package.",children:[{type:"cmd",text:"Select Install."}]}
+   ],
+   meta:{title:"Install display service update",dmc:"TRAINING-SCENARIO-03",security:"UNCLASSIFIED",issue:"002",workflow:"In Work"},
+   applicability:{product:"Surface Sensor Software",variant:"All",swFrom:"4.0",swTo:"4.9",serial:"All serials",expression:'product == "Surface Sensor Software"'}
+  }),
+  criteria:[
+   ["Variant is B",()=>String(state.model.applicability?.variant||"").trim().toUpperCase()==="B"],
+   ["Software from is 4.5",()=>String(state.model.applicability?.swFrom||"").trim()==="4.5"],
+   ["Software to is 4.9",()=>String(state.model.applicability?.swTo||"").trim()==="4.9"],
+   ["Applicability expression identifies Variant B",()=>/variant\s*==?\s*["']?B/i.test(String(state.model.applicability?.expression||""))]
+  ],
+  hints:["Applicability is edited separately from ordinary element text.","The visible fields and the expression should tell the same story.","The task gives you both the variant and the software range."]
+ },
+ {
+  id:"sc4",title:"Find and update terminology",
+  level:"Intermediate",
+  scenario:"The product terminology changed from “Radar Processor” to “Radar Processing Unit”. The document contains several old occurrences. A warning must remain exactly as written.",
+  task:"Update every old product-name occurrence and verify the warning element is unchanged.",
+  setup:()=>({
+   nodes:[
+    {type:"title",text:"Radar Processor software update"},
+    {type:"para",text:"The Radar Processor hosts the processing service."},
+    {type:"warning",text:"Do not disconnect electrical power during installation."},
+    {type:"step",text:"Connect to the Radar Processor.",children:[{type:"cmd",text:"Open the Radar Processor maintenance interface."}]},
+    {type:"note",text:"Record the Radar Processor software version."}
+   ],
+   meta:{title:"Radar Processor software update",dmc:"TRAINING-SCENARIO-04",security:"UNCLASSIFIED",issue:"003",workflow:"In Work"},
+   applicability:{expression:'product == "Surface Sensor Software"',variant:"All",swFrom:"4.0",swTo:"4.9",serial:"All serials"},
+   baseline:{warning:"Do not disconnect electrical power during installation."}
+  }),
+  criteria:[
+   ["Old term no longer appears",()=>!/Radar Processor(?! Unit)/.test(flattenText(state.model.nodes||[]))],
+   ["New term appears",()=>/Radar Processing Unit/.test(flattenText(state.model.nodes||[]))],
+   ["Warning text is unchanged",()=>getNodeByType("warning")?.text===state.scenarioBaseline?.warning]
+  ],
+  hints:["This is a good candidate for Find/Replace rather than editing each occurrence manually.","Markup search and text search are different tools.","Use Find Tag/Attribute if you want to navigate directly to the warning."]
+ },
+ {
+  id:"sc5",title:"Make the DM comply with Project BREX",
+  level:"Intermediate",
+  scenario:"This software procedure was drafted outside the project. The XML structure is usable, but it has not yet been brought into line with the active Strict Project BREX.",
+  task:"Make the DM comply with the active Project BREX profile.",
+  setup:()=>({
+   profile:"saab_strict",
+   nodes:[
+    {type:"title",text:"Install processing service patch"},
+    {type:"para",text:"Install the approved patch package."},
+    {type:"step",text:"Install the patch.",children:[]}
+   ],
+   meta:{title:"Install processing service patch",dmc:"TRAINING-SCENARIO-05",security:"",issue:"",workflow:"In Work"},
+   applicability:{product:"Surface Sensor Software",variant:"All",swFrom:"4.0",swTo:"4.9",serial:"All serials",expression:""}
+  }),
+  criteria:[
+   ["Security classification supplied",()=>["UNCLASSIFIED","RESTRICTED"].includes(String(state.model.meta?.security||""))],
+   ["Issue number supplied",()=>!!String(state.model.meta?.issue||"").trim()],
+   ["Applicability expression supplied",()=>!!String(state.model.applicability?.expression||"").trim()],
+   ["MAINTENANCE mode is stated",()=>/MAINTENANCE mode/i.test(flattenText(state.model.nodes||[]))],
+   ["Every step has a cmd",()=>getNodesByType("step").every(n=>(n.children||[]).some(c=>c.type==="cmd"))]
+  ],
+  hints:["Read the BREX Rules tab instead of guessing what the project requires.","Some BREX rules concern metadata, not the body structure.","The active Strict profile contains more requirements than the Balanced profile."]
+ },
+ {
+  id:"sc6",title:"Clean up procedural language",
+  level:"Intermediate",
+  scenario:"The technical content is correct, but the draft contains language that should be cleaned up before review.",
+  task:"Prepare the procedure for technical review without changing its technical meaning.",
+  setup:()=>({
+   nodes:[
+    {type:"title",text:"Verify update package"},
+    {type:"para",text:"Prior to installation, you should utilize the approved maintenance laptop; make sure the package is correct."},
+    {type:"step",text:"Verify the package.",children:[{type:"cmd",text:"You should verify the package signature."}]},
+    {type:"note",text:"Record the package identifier for traceability."}
+   ],
+   meta:{title:"Verify update package",dmc:"TRAINING-SCENARIO-06",security:"UNCLASSIFIED",issue:"001",workflow:"In Work"},
+   applicability:{expression:'product == "Surface Sensor Software"',variant:"All",swFrom:"4.0",swTo:"4.9",serial:"All serials"}
+  }),
+  criteria:[
+   ["No “utilize” remains",()=>!/\butilize\b/i.test(flattenText(state.model.nodes||[]))],
+   ["No “prior to” remains",()=>!/\bprior to\b/i.test(flattenText(state.model.nodes||[]))],
+   ["No “should” remains",()=>!/\bshould\b/i.test(flattenText(state.model.nodes||[]))],
+   ["No semicolon remains",()=>!/[;]/.test(flattenText(state.model.nodes||[]))],
+   ["No “make sure” remains",()=>!/\bmake sure\b/i.test(flattenText(state.model.nodes||[]))]
+  ],
+  hints:["The enabled STE-style checks can identify several of the phrases.","Prefer short direct verbs such as use, verify and before.","A language warning is different from a structural completeness error."]
+ },
+ {
+  id:"sc7",title:"Add the correct Fault Isolation reference",
+  level:"Intermediate",
+  scenario:"If installation fails, the maintainer must continue in the managed Fault Isolation DM. The correct DM is already available in the CSDB.",
+  task:"Add the correct Fault Isolation cross-reference at the failure note and verify that the managed reference is present.",
+  setup:()=>({
+   nodes:[
+    {type:"title",text:"Install software package"},
+    {type:"para",text:"Set the system to MAINTENANCE mode."},
+    {type:"step",text:"Install the package.",children:[{type:"cmd",text:"Select Install."}]},
+    {type:"note",text:"If the installation fails, continue with fault isolation."}
+   ],
+   meta:{title:"Install software package",dmc:"TRAINING-SCENARIO-07",security:"UNCLASSIFIED",issue:"001",workflow:"In Work"},
+   applicability:{expression:'product == "Surface Sensor Software"',variant:"All",swFrom:"4.0",swTo:"4.9",serial:"All serials"},
+   selectType:"note"
+  }),
+  criteria:[
+   ["Fault Isolation DM is referenced",()=>getNodesByType("note").some(n=>(n.xrefs||[]).some(x=>x.dmc==="23-31-01-310-801A-A"))],
+   ["Reference is attached to the failure note",()=>getNodeByType("note")?.xrefs?.some(x=>x.dmc==="23-31-01-310-801A-A")]
+  ],
+  hints:["Use the managed Xref picker rather than typing a DMC as ordinary text.","The target is the Fault Isolation DM in the CSDB.","Attach the reference to the note that tells the maintainer what to do after a failure."]
+ },
+ {
+  id:"sc8",title:"Implement an engineering change",
+  level:"Advanced",
+  scenario:"Engineering change EC-042: from software 4.7, a manual restart is no longer required. After installation, the author must instead verify that the Radar Processing Service status is Running.",
+  task:"Update the procedure to implement EC-042.",
+  setup:()=>({
+   nodes:[
+    {type:"title",text:"Install Radar Processing Service update"},
+    {type:"para",text:"Set the system to MAINTENANCE mode."},
+    {type:"step",text:"Install the update.",children:[{type:"cmd",text:"Select Install."}]},
+    {type:"step",text:"Restart the processing service.",children:[{type:"cmd",text:"Select Restart."}]},
+    {type:"step",text:"Complete the installation.",children:[{type:"cmd",text:"Record the installed version."}]}
+   ],
+   meta:{title:"Install Radar Processing Service update",dmc:"TRAINING-SCENARIO-08",security:"UNCLASSIFIED",issue:"004",workflow:"In Work"},
+   applicability:{product:"Surface Sensor Software",variant:"All",swFrom:"4.7",swTo:"4.9",serial:"All serials",expression:'software >= "4.7"'}
+  }),
+  criteria:[
+   ["Obsolete restart instruction removed",()=>!/\brestart\b/i.test(flattenText(state.model.nodes||[]))],
+   ["Service status verification added",()=>/Radar Processing Service.*status|status.*Radar Processing Service/i.test(flattenText(state.model.nodes||[]))],
+   ["Running state is specified",()=>/\bRunning\b/i.test(flattenText(state.model.nodes||[]))],
+   ["All remaining steps contain cmd",()=>getNodesByType("step").every(n=>(n.children||[]).some(c=>c.type==="cmd"))]
+  ],
+  hints:["Treat the engineering change as requirements, not as text to paste verbatim.","Remove the obsolete action rather than leaving contradictory instructions.","The new verification should be an actionable command in the procedure."]
+ },
+ {
+  id:"sc9",title:"Prepare the DM for review",
+  level:"Advanced",
+  scenario:"This DM is almost finished. It contains several small issues left by the author. No checklist has been supplied by engineering.",
+  task:"Prepare this DM for review and submit it when you are satisfied.",
+  setup:()=>({
+   profile:"saab_strict",
+   nodes:[
+    {type:"title",text:"Verify processing service baseline"},
+    {type:"para",text:"Set the system to MAINTENANCE mode before verification."},
+    {type:"step",text:"Open the service status page.",children:[{type:"cmd",text:"You should select Service Status."}]},
+    {type:"step",text:"Verify the baseline.",children:[{type:"cmd",text:"Verify that the displayed baseline is approved."}]},
+    {type:"note",text:""}
+   ],
+   meta:{title:"Verify processing service baseline",dmc:"TRAINING-SCENARIO-09",security:"UNCLASSIFIED",issue:"005",workflow:"In Work"},
+   applicability:{product:"Surface Sensor Software",variant:"All",swFrom:"4.0",swTo:"4.9",serial:"All serials",expression:""}
+  }),
+  criteria:[
+   ["No empty elements remain",()=>getNodesByType("note").every(n=>String(n.text||"").trim())],
+   ["Applicability is supplied",()=>!!String(state.model.applicability?.expression||"").trim()],
+   ["Procedural language no longer uses should",()=>!/\bshould\b/i.test(flattenText(state.model.nodes||[]))],
+   ["DM submitted for review",()=>state.model.meta?.workflow==="In Review"]
+  ],
+  hints:["A review-ready DM should satisfy both structural/project checks and obvious language issues.","Check Completeness and BREX Rules answer different questions.","Submitting for review is a workflow action, not the same thing as Check in."]
+ },
+ {
+  id:"sc10",title:"Resolve a returned DM and check it in",
+  level:"Advanced",
+  scenario:"The reviewer returned this DM with three findings: clarify the verification action, restrict applicability to Variant B, and remove the obsolete note.",
+  task:"Return the DM to authoring, resolve the review findings, verify the document, resolve the review comments, and check the DM back in.",
+  setup:()=>({
+   profile:"balanced",
+   nodes:[
+    {type:"title",text:"Verify operator display service"},
+    {type:"para",text:"Set the system to MAINTENANCE mode."},
+    {type:"step",text:"Verify the display service.",children:[{type:"cmd",text:"Check the service."}]},
+    {type:"note",text:"Obsolete: restart the display computer after verification."}
+   ],
+   meta:{title:"Verify operator display service",dmc:"TRAINING-SCENARIO-10",security:"UNCLASSIFIED",issue:"006",workflow:"In Review"},
+   applicability:{product:"Surface Sensor Software",variant:"All",swFrom:"4.0",swTo:"4.9",serial:"All serials",expression:'product == "Surface Sensor Software"'},
+   comments:[
+    {author:"Reviewer",time:"Review",text:"Clarify the verification action and expected result.",resolved:false},
+    {author:"Reviewer",time:"Review",text:"Restrict applicability to Variant B.",resolved:false},
+    {author:"Reviewer",time:"Review",text:"Remove the obsolete restart note.",resolved:false}
+   ]
+  }),
+  criteria:[
+   ["Returned to authoring",()=>state.model.meta?.workflow==="In Work"],
+   ["Verification states the expected result",()=>/Running|active|operational/i.test(flattenText(state.model.nodes||[]))],
+   ["Applicability restricted to Variant B",()=>String(state.model.applicability?.variant||"").trim().toUpperCase()==="B"&&/variant\s*==?\s*["']?B/i.test(String(state.model.applicability?.expression||""))],
+   ["Obsolete restart note removed",()=>!/Obsolete:|restart the display computer/i.test(flattenText(state.model.nodes||[]))],
+   ["All review comments resolved",()=>{const d=getActiveDocument();return !!d&&(d.comments||[]).length>=3&&(d.comments||[]).every(c=>c.resolved)}],
+   ["DM checked in",()=>!!state.drillEvidence?.checkedIn]
+  ],
+  hints:["Start with the workflow state: content in review is not ready for normal authoring.","Use the review comments as requirements and resolve them after making the changes.","Check in is the final hand-back action; it is separate from Save and workflow state."]
+ }
+];
+
+function scenarioProgressKey(){return "techauthorScenarioProgressV727"}
+function loadScenarioProgress(){try{return JSON.parse(localStorage.getItem(scenarioProgressKey())||"{}")}catch(e){return{}}}
+function saveScenarioProgress(){localStorage.setItem(scenarioProgressKey(),JSON.stringify(state.scenarioProgress||{}))}
+function currentScenario(){return scenarioPractice[state.scenarioIndex||0]}
+
+function hydrateScenarioNode(n){
+ const out={id:uid(),type:n.type,text:n.text||""};
+ if(n.attrs)out.attrs=JSON.parse(JSON.stringify(n.attrs));
+ if(n.children)out.children=n.children.map(hydrateScenarioNode);
+ if(n.rows){out.rows=JSON.parse(JSON.stringify(n.rows));out.headerRow=n.headerRow!==false}
+ if(n.xrefs)out.xrefs=JSON.parse(JSON.stringify(n.xrefs));
+ return out;
+}
+
+function applyScenarioSetup(scenario){
+ const spec=scenario.setup();
+ state.trainingExercise={id:scenario.id,title:`Scenario — ${scenario.title}`};
+ state.scenarioAttempts=0;
+ state.scenarioHintIndex=0;
+ state.scenarioBaseline=spec.baseline||{};
+ state.drillEvidence={};
+ state.lastLearningAction=null;
+ state.undoStack=[];state.redoStack=[];
+ state.issues=[];
+
+ state.model.meta={...state.model.meta,...(spec.meta||{})};
+ state.model.applicability={
+   product:"Surface Sensor Software",variant:"All",swFrom:"",swTo:"",
+   serial:"All serials",expression:"",...(spec.applicability||{})
+ };
+ state.model.nodes=(spec.nodes||[]).map(hydrateScenarioNode);
+ state.model.meta.workflow=state.model.meta.workflow||"In Work";
+
+ if(spec.profile){
+   if($("#brexProfileSelect"))$("#brexProfileSelect").value=spec.profile;
+   if($("#ruleProfileInput"))$("#ruleProfileInput").value=spec.profile;
+ }
+
+ const active=getActiveDocument();
+ if(active){
+   active.comments=JSON.parse(JSON.stringify(spec.comments||[]));
+   active.model=JSON.parse(JSON.stringify(state.model));
+   active.title=state.model.meta.title;
+   active.dmc=state.model.meta.dmc;
+ }
+ state.rootSelected=false;
+ const selectType=spec.selectType;
+ state.selectedId=selectType?getNodeByType(selectType)?.id:state.model.nodes[0]?.id||null;
+ state.dirty=true;
+
+ renderAuthor();renderTree();syncControlsFromModel();renderReferences();renderComments();
+ renderBrexPanel();renderElementCoach();refreshInsertOptions();updateContext();
+ syncSourcePassive();renderPreview();setWorkflowButtons();updateUndoRedoButtons();
+ if($("#currentDocLabel"))$("#currentDocLabel").textContent=`DM ${state.model.meta.dmc}`;
+ if($("#docTabTitle"))$("#docTabTitle").textContent=`${state.model.meta.dmc} — ${state.model.meta.title}`;
+}
+
+function renderScenarioSelector(){
+ const sel=$("#scenarioSelect");if(!sel)return;
+ state.scenarioProgress=state.scenarioProgress||loadScenarioProgress();
+ sel.innerHTML=scenarioPractice.map((s,i)=>`<option value="${i}">${state.scenarioProgress[s.id]?"✓ ":""}${i+1}. ${esc(s.title)}</option>`).join("");
+ sel.value=String(state.scenarioIndex||0);
+ renderScenarioIntro();
+}
+
+function renderScenarioIntro(){
+ const s=currentScenario(),host=$("#scenarioCard");if(!s||!host)return;
+ const done=!!state.scenarioProgress?.[s.id];
+ host.innerHTML=`
+   <div class="scenario-head"><span>Scenario ${(state.scenarioIndex||0)+1} / ${scenarioPractice.length}</span><span class="scenario-level">${esc(s.level)}</span></div>
+   <h4>${esc(s.title)}</h4>
+   <div class="scenario-section"><strong>Scenario</strong><p>${esc(s.scenario)}</p></div>
+   <div class="scenario-section task"><strong>Your task</strong><p>${esc(s.task)}</p></div>
+   ${done?'<div class="scenario-complete-badge">✓ Previously completed</div>':""}`;
+ $("#scenarioStartBtn")?.classList.remove("hidden");
+ $("#scenarioCheckBtn")?.classList.add("hidden");
+ $("#scenarioHintBtn")?.classList.add("hidden");
+ $("#scenarioNextBtn")?.classList.add("hidden");
+ if($("#scenarioFeedback"))$("#scenarioFeedback").innerHTML="";
+}
+
+function startScenario(){
+ const s=currentScenario();if(!s)return;
+ applyScenarioSetup(s);
+ $("#scenarioStartBtn")?.classList.add("hidden");
+ $("#scenarioCheckBtn")?.classList.remove("hidden");
+ $("#scenarioHintBtn")?.classList.add("hidden");
+ $("#scenarioNextBtn")?.classList.add("hidden");
+ if($("#scenarioFeedback"))$("#scenarioFeedback").innerHTML=`<div class="scenario-status">Scenario loaded. Work in the editor and use any tools you think are appropriate.</div>`;
+}
+
+function evaluateScenario(){
+ const s=currentScenario();if(!s)return [];
+ return s.criteria.map(([label,test])=>{
+   let pass=false;try{pass=!!test()}catch(e){}
+   return {label,pass};
+ });
+}
+
+function checkScenario(){
+ const s=currentScenario();if(!s)return;
+ state.scenarioAttempts=(state.scenarioAttempts||0)+1;
+ const results=evaluateScenario(),failed=results.filter(r=>!r.pass);
+ const fb=$("#scenarioFeedback");
+ if(!failed.length){
+   state.scenarioProgress=state.scenarioProgress||loadScenarioProgress();
+   state.scenarioProgress[s.id]=true;saveScenarioProgress();
+   if(fb)fb.innerHTML=`<div class="scenario-result pass"><strong>✓ Scenario complete</strong><div>All ${results.length} acceptance criteria are satisfied.</div><div class="scenario-criteria">${results.map(r=>`<div>✓ ${esc(r.label)}</div>`).join("")}</div></div>`;
+   $("#scenarioCheckBtn")?.classList.add("hidden");
+   $("#scenarioHintBtn")?.classList.add("hidden");
+   $("#scenarioNextBtn")?.classList.toggle("hidden",(state.scenarioIndex||0)>=scenarioPractice.length-1);
+   renderScenarioSelector();
+   $("#scenarioStartBtn")?.classList.add("hidden");
+   $("#scenarioCheckBtn")?.classList.add("hidden");
+   $("#scenarioNextBtn")?.classList.toggle("hidden",(state.scenarioIndex||0)>=scenarioPractice.length-1);
+   return;
+ }
+ if(fb)fb.innerHTML=`<div class="scenario-result fail"><strong>Not ready yet</strong><div>${failed.length} of ${results.length} acceptance criteria are not yet satisfied.</div><div class="scenario-attempt">Attempt ${state.scenarioAttempts}. The criteria stay hidden so you still have to diagnose the document.</div></div>`;
+ if(state.scenarioAttempts>=2&&s.hints?.length)$("#scenarioHintBtn")?.classList.remove("hidden");
+}
+
+function showScenarioHint(){
+ const s=currentScenario();if(!s?.hints?.length)return;
+ const i=Math.min(state.scenarioHintIndex||0,s.hints.length-1);
+ const fb=$("#scenarioFeedback");
+ if(fb)fb.innerHTML+=`<div class="scenario-hint"><strong>Hint ${i+1}</strong><div>${esc(s.hints[i])}</div></div>`;
+ state.scenarioHintIndex=Math.min(i+1,s.hints.length-1);
+}
+
+function nextScenario(){
+ if((state.scenarioIndex||0)>=scenarioPractice.length-1)return;
+ state.scenarioIndex++;
+ state.scenarioAttempts=0;state.scenarioHintIndex=0;
+ renderScenarioSelector();
+}
+
+
 // Expose curriculum globals for classic multi-script load and Node smoke tests.
 (function(g){
   g.drillChapterSpecs = drillChapterSpecs;
@@ -559,4 +946,11 @@ function jumpToDrill(index){
   g.checkCurrentDrill = checkCurrentDrill;
   g.loadCurrentDrill = loadCurrentDrill;
   g.startBeginnerDrills = startBeginnerDrills;
+  g.scenarioPractice = scenarioPractice;
+  g.renderScenarioSelector = renderScenarioSelector;
+  g.renderScenarioIntro = renderScenarioIntro;
+  g.startScenario = startScenario;
+  g.checkScenario = checkScenario;
+  g.showScenarioHint = showScenarioHint;
+  g.nextScenario = nextScenario;
 })(typeof globalThis !== "undefined" ? globalThis : window);

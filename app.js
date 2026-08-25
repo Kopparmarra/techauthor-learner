@@ -107,6 +107,10 @@ function criticalClickAction(id,el){
     case "loadExerciseBtn": return loadExercise();
     case "startGuidedTaskBtn": return startGuidedTask();
     case "scoreGuidedTaskBtn": return scoreGuidedTask();
+    case "scenarioStartBtn": return startScenario();
+    case "scenarioCheckBtn": return checkScenario();
+    case "scenarioHintBtn": return showScenarioHint();
+    case "scenarioNextBtn": return nextScenario();
   }
 }
 
@@ -115,6 +119,10 @@ function criticalChangeAction(id,el){
     case "tagModeSelect": return applyTagMode(el.value);
     case "insertPositionSelect": refreshInsertOptions();return updateContext();
     case "exerciseSelect": return renderExerciseInfo();
+    case "scenarioSelect":
+      state.scenarioIndex=Number(el.value)||0;
+      state.scenarioAttempts=0;state.scenarioHintIndex=0;
+      return renderScenarioIntro();
     case "drillChapterSelect": state.drillChapterIndex=Number(el.value)||0;state.drillIndex=0;state.drillSession=null;return renderBeginnerStartState();
     case "drillJumpSelect": state.drillIndex=Number(el.value)||0;state.drillSession={correct:0,attempted:0,streak:0};loadCurrentDrill();return renderDrillSelectors();
     case "workflowInput":
@@ -188,7 +196,7 @@ document.addEventListener("click",e=>{
         "applyElementPropsBtn","addCommentBtn","applyApplicabilityBtn","beginnerDrillsBtn",
         "arbortextBasicsBtn","structuredPracticeBtn","elementCoachBtn","startDrillsBtn",
         "checkDrillBtn","nextDrillBtn","skipDrillBtn","startBasicExerciseBtn","loadExerciseBtn",
-        "startGuidedTaskBtn","scoreGuidedTaskBtn"
+        "startGuidedTaskBtn","scoreGuidedTaskBtn","scenarioStartBtn","scenarioCheckBtn","scenarioHintBtn","scenarioNextBtn"
       ].includes(id);
       if(handled){
         e.preventDefault();e.stopImmediatePropagation();
@@ -207,7 +215,7 @@ document.addEventListener("click",e=>{
 document.addEventListener("change",e=>{
   const id=e.target?.id;
   const handled=[
-    "tagModeSelect","insertPositionSelect","exerciseSelect","drillChapterSelect","drillJumpSelect","workflowInput",
+    "tagModeSelect","insertPositionSelect","exerciseSelect","scenarioSelect","drillChapterSelect","drillJumpSelect","workflowInput",
     "brexProfileSelect","ruleProfileInput","dmcInput","issueInput","langInput",
     "titleInput","securityInput","authorInput","responsibleInput","reviewerInput"
   ].includes(id);
@@ -609,7 +617,7 @@ const treeData=[
 const cloneDemo=()=>JSON.parse(JSON.stringify(demoModel));
 
 const state={
-  model:cloneDemo(), selectedId:"n1", dirty:false, issues:[], leftMode:"document",trainingExercise:null,rootSelected:false,undoStack:[],redoStack:[],historyLimit:50,tagMode:"partial",quickTagsEnabled:true,quickTagsIndex:0,quickTagsPopup:null,drillSession:null,selectedBasic:"tags",lastLearningAction:null,contextRulesOn:true,focusCycleIndex:0,zoomLevel:0,drillChapterIndex:0,drillIndex:0,drillProgress:null,
+  model:cloneDemo(), selectedId:"n1", dirty:false, issues:[], leftMode:"document",trainingExercise:null,rootSelected:false,undoStack:[],redoStack:[],historyLimit:50,tagMode:"partial",quickTagsEnabled:true,quickTagsIndex:0,quickTagsPopup:null,drillSession:null,selectedBasic:"tags",lastLearningAction:null,contextRulesOn:true,focusCycleIndex:0,zoomLevel:0,drillChapterIndex:0,drillIndex:0,drillProgress:null,scenarioIndex:0,scenarioProgress:null,scenarioAttempts:0,scenarioHintIndex:0,scenarioBaseline:null,
   history:[
    {time:"16:03",user:"Technical Writer",text:"Demo document opened"},
    {time:"16:06",user:"Technical Writer",text:"Issue metadata reviewed"}
@@ -1063,13 +1071,14 @@ function renderElementCoach(){
  host.innerHTML=`<div class="learning-card"><h4>&lt;${esc(type)}&gt;</h4><span class="learning-badge schema">Schema</span><span class="learning-badge brex">BREX</span><p>${esc(lesson.summary)}</p><p><strong>Role:</strong> ${esc(lesson.role)}</p><p><strong>Typical parent:</strong> ${esc((lesson.parents||[]).join(", ")||"—")}</p><p><strong>Schema children:</strong> ${esc(schemaAllowed.join(", ")||"None")}</p><p><strong>BREX permits:</strong> ${esc(brexAllowed.join(", ")||"None")}</p>${blocked.length?`<p><strong>Filtered by BREX:</strong> ${esc(blocked.join(", "))}</p>`:""}${level!=="assessment"?`<div class="learning-callout learning-hint"><strong>Good practice</strong><br>${esc(lesson.good)}</div>`:""}${level==="beginner"?`<div class="learning-callout learning-hint"><strong>Common mistake</strong><br>${esc(lesson.common)}</div>`:""}</div>`;
 }
 function showLearningView(name){
- const views=["beginnerDrillsView","arbortextBasicsView","structuredPracticeView","elementCoachView"];
+ const views=["beginnerDrillsView","arbortextBasicsView","structuredPracticeView","scenarioPracticeView","elementCoachView"];
  views.forEach(id=>$("#"+id)?.classList.add("hidden"));
- const buttons=["beginnerDrillsBtn","arbortextBasicsBtn","structuredPracticeBtn","elementCoachBtn"];
+ const buttons=["beginnerDrillsBtn","arbortextBasicsBtn","structuredPracticeBtn","scenarioPracticeBtn","elementCoachBtn"];
  buttons.forEach(id=>$("#"+id)?.classList.remove("active"));
  if(name==="beginner"){$("#beginnerDrillsView").classList.remove("hidden");$("#beginnerDrillsBtn").classList.add("active");}
  if(name==="arbortext"){$("#arbortextBasicsView").classList.remove("hidden");$("#arbortextBasicsBtn").classList.add("active");renderArbortextBasicDetail();}
  if(name==="structured"){$("#structuredPracticeView").classList.remove("hidden");$("#structuredPracticeBtn").classList.add("active");renderExerciseInfo();renderGuidedTask();}
+ if(name==="scenario"){$("#scenarioPracticeView").classList.remove("hidden");$("#scenarioPracticeBtn").classList.add("active");if(typeof renderScenarioSelector==="function")renderScenarioSelector();}
  if(name==="element"){$("#elementCoachView").classList.remove("hidden");$("#elementCoachBtn").classList.add("active");renderElementCoach();}
 }
 
@@ -3392,6 +3401,7 @@ function updateLearningModeUi(){
    if(typeof renderDrillSelectors==="function")renderDrillSelectors();
    if(typeof updateDrillStats==="function")updateDrillStats();
    if(typeof renderBeginnerStartState==="function")renderBeginnerStartState();
+   if(typeof renderScenarioSelector==="function")renderScenarioSelector();
  }catch(err){
    console.error("Learning Mode initialization failed",err);
    if($("#cursorStatus"))$("#cursorStatus").textContent=`Learning error: ${err.message}`;
@@ -3404,7 +3414,12 @@ $("#learningModeBtn").onclick=()=>{showRightTab("learning");showLearningView("be
 $("#beginnerDrillsBtn").onclick=()=>showLearningView("beginner");
 $("#arbortextBasicsBtn").onclick=()=>showLearningView("arbortext");
 $("#structuredPracticeBtn").onclick=()=>showLearningView("structured");
+$("#scenarioPracticeBtn").onclick=()=>showLearningView("scenario");
 $("#elementCoachBtn").onclick=()=>showLearningView("element");
+$("#scenarioStartBtn").onclick=()=>startScenario();
+$("#scenarioCheckBtn").onclick=()=>checkScenario();
+$("#scenarioHintBtn").onclick=()=>showScenarioHint();
+$("#scenarioNextBtn").onclick=()=>nextScenario();
 $("#startDrillsBtn").onclick=startBeginnerDrills;
 $("#checkDrillBtn").onclick=checkCurrentDrill;
 $("#nextDrillBtn").onclick=nextBeginnerDrill;
