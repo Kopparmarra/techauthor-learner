@@ -778,3 +778,9 @@ The check also now adds lightweight document-type checks for invalid element pla
 - Correct/Not yet feedback now wraps inside the pane instead of being clipped off on the right.
 - Disabled horizontal overflow in the Learning tab while preserving vertical scrolling.
 - Asset cache-busting updated to v7.23.
+
+## v7.24 — BREX profile drill setup
+- Profile-switch drills now start from the opposite BREX profile.
+- “Switch ... to Balanced” starts on Strict.
+- “Switch ... back to Strict” starts on Balanced.
+- This prevents a drill from already being in the target state when it loads.

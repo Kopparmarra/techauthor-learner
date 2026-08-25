@@ -141,7 +141,24 @@ function makeDrill(spec){
  else if(k==="fixcmd"||k==="validatefix"){d.setup=()=>{const m=drillSetupBase("step");m.nodes.find(n=>n.type==="step").children=[];return m};d.test=()=>hasChild("step","cmd")&&(k!=="validatefix"||state.lastLearningAction?.kind==="validate")}
  else if(k==="maintenance"){d.setup=()=>drillSetupBase("para");d.test=()=>/MAINTENANCE mode/i.test(flattenText(state.model.nodes))}
  else if(k==="applicability"){d.setup=()=>drillSetupBase("para");d.test=()=>!!String(state.model.applicability?.expression||"").trim()}
- else if(k==="profile"){d.setup=()=>drillSetupBase("para");d.test=()=>$("#brexProfileSelect")?.value===p[0]}
+ else if(k==="profile"){
+   const target=p[0];
+   d.setup=()=>{
+     // Start from a different profile so the learner must actually perform the change.
+     const startProfile=target==="saab_strict"?"balanced":"saab_strict";
+     if($("#brexProfileSelect"))$("#brexProfileSelect").value=startProfile;
+     if($("#ruleProfileInput"))$("#ruleProfileInput").value=startProfile;
+     const m=drillSetupBase("para");
+     setTimeout(()=>{
+       if($("#brexProfileSelect"))$("#brexProfileSelect").value=startProfile;
+       if($("#ruleProfileInput"))$("#ruleProfileInput").value=startProfile;
+       if(typeof renderBrexPanel==="function")renderBrexPanel();
+       if(typeof refreshInsertOptions==="function")refreshInsertOptions();
+     },0);
+     return m;
+   };
+   d.test=()=>$("#brexProfileSelect")?.value===target;
+ }
  else if(k==="toggle"){d.setup=()=>drillSetupBase("para");d.test=()=>!!$("#"+p[0])?.checked}
  else if(k==="stepchoices"){d.setup=()=>drillSetupBase("step");d.test=()=>["cmd","note","warning","codeblock"].every(x=>($("#elementHint")?.textContent||"").includes(x))}
  else if(k==="deletesecondtitle"){d.setup=()=>drillModel([{type:"title",text:"One"},{type:"title",text:"Two"},{type:"para",text:"Text"}],"title",1);d.test=()=>state.model.nodes.filter(n=>n.type==="title").length===1}
