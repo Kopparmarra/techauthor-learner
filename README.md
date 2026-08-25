@@ -761,3 +761,8 @@ The check also now adds lightweight document-type checks for invalid element pla
 - The learner can return to Learning and click Check without losing credit.
 - The same fix was applied to References and generic right-pane-tab drills.
 - Drill wording now explicitly says to inspect the tab, return to Learning, and click Check.
+
+## v7.21 — BREX wording + cache busting
+- Reworded the BREX drill to remove the misleading phrase “S1000D layer”.
+- The drill now says: open the BREX Rules tab, inspect the active project rules, return to Learning, then click Check.
+- Added version query strings to local CSS/JS assets in `index.html` (`?v=7.21`) so GitHub Pages/browser caches are much less likely to serve stale drill logic after an update.
