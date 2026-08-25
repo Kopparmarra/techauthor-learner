@@ -915,3 +915,66 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .completeness-category .issue.err .severity{color:#8e1f1f}
 .completeness-category .issue.warn .severity{color:#855d00}
 .completeness-category .issue.info .severity{color:#56636d}
+
+
+/* v7.23 — Learning pane small-screen width repair
+   Full-width buttons previously used content-box sizing, so their padding made
+   them wider than the Learning pane and clipped labels such as "Next drill". */
+#learningTab,
+#learningTab .learning-panel,
+#learningTab .learning-view,
+#learningTab .learning-card,
+#learningTab .drill-actions,
+#learningTab #drillFeedback{
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+
+#learningTab .btn,
+#learningTab select,
+#learningTab button{
+  box-sizing:border-box;
+  min-width:0;
+  max-width:100%;
+}
+
+#learningTab .btn.full,
+#nextDrillBtn,
+#checkDrillBtn,
+#startDrillsBtn{
+  width:100%;
+  max-width:100%;
+  white-space:normal;
+  text-align:center;
+  overflow-wrap:anywhere;
+}
+
+#drillFeedback,
+#drillFeedback .drill-feedback,
+#drillFeedback .drill-feedback > div,
+#drillFeedback .drill-feedback strong{
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+
+/* Keep successful feedback compact but fully readable on narrow panes. */
+.app.auto-compact-learning #drillFeedback .drill-feedback.correct,
+.app.auto-tight-learning #drillFeedback .drill-feedback.correct{
+  line-height:1.25!important;
+}
+
+.app.auto-tight-learning #nextDrillBtn,
+.app.auto-tight-learning #checkDrillBtn{
+  padding:7px 8px!important;
+  font-size:12px!important;
+}
+
+/* Prevent horizontal scrolling in Learning from hiding the right side of controls. */
+#learningTab.right-tab-content{
+  overflow-x:hidden;
+}

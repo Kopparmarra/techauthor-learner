@@ -771,3 +771,10 @@ The check also now adds lightweight document-type checks for invalid element pla
 - Drill 18 now says: “Switch the active Project BREX profile to Balanced.”
 - Drill 19 now says: “Switch the active Project BREX profile back to Strict.”
 - Asset cache-busting version updated to v7.22.
+
+## v7.23 — Small-screen Learning pane fix
+- Fixed `Next drill`, `Check`, and other full-width Learning buttons overflowing the right pane on narrow browser windows.
+- Added border-box sizing and width constraints throughout the Learning pane.
+- Correct/Not yet feedback now wraps inside the pane instead of being clipped off on the right.
+- Disabled horizontal overflow in the Learning tab while preserving vertical scrolling.
+- Asset cache-busting updated to v7.23.
