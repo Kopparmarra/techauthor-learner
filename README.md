@@ -737,3 +737,8 @@ Check Completeness now groups findings by what they mean rather than showing one
 Each group includes a short explanation. Errors, warnings and informational findings are visually distinguished. Double-clicking a result that is tied to a document node selects/reveals that element before opening the validation panel.
 
 The check also now adds lightweight document-type checks for invalid element placement, empty leaf elements, invalid/required attributes, duplicate explicit IDs and inconsistent table rows.
+
+## v7.17 — Learning drill fix
+- Removed the inaccessible drill instruction to open the Validation/Completeness tab on the right while Learning occupies the right pane.
+- Drill 6 in Chapter 4 now asks the learner to run Check Completeness and open the bottom Issues tab.
+- The following drill was adjusted to avoid duplicating the same task.
