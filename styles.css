@@ -836,14 +836,15 @@ button:disabled{opacity:.45;cursor:not-allowed}
   .arb-find-file-entities{margin-left:0!important}
 }
 
-/* Document Type Viewer — Arbortext-inspired training view */
-.dtd-viewer-shell{border:1px solid #b9b9b9;background:#f6f6f6}
-.dtd-viewer-head,.dtd-viewer-selected{padding:8px 10px;background:#ededed;border-bottom:1px solid #c9c9c9;font-size:11px}
-.dtd-viewer-selected{border-top:1px solid #c9c9c9;border-bottom:0}
-.dtd-tree{max-height:280px;overflow:auto;background:#fff;padding:5px 0;font-family:Consolas,monospace;font-size:11px}
-.dtd-tree-row{display:flex;width:100%;align-items:center;gap:4px;border:0;background:transparent;text-align:left;padding:3px 8px 3px calc(8px + (var(--dtd-depth) * 18px));font:inherit;color:#222;cursor:default}
-.dtd-tree-row:hover{background:#efefef}
-.dtd-tree-row.ctx{background:#fff1a8}
-.dtd-tree-row.dtd-picked{outline:1px dotted #555;outline-offset:-2px;font-weight:700}
-.dtd-tree-marker{display:inline-block;width:12px;color:#666;text-align:center}
-.dtd-viewer-actions{display:flex;gap:6px;flex-wrap:wrap;padding:9px 10px;border-top:1px solid #c9c9c9;background:#ededed}
+
+/* v7.15 subtle completeness success feedback */
+#cursorStatus.completeness-ok-flash{
+  color:#1f6b2a !important;
+  font-weight:700 !important;
+}
+#completenessStatus.completeness-ok-flash{
+  background:#dfeedd !important;
+  color:#1f6b2a !important;
+  border-color:#6f9d73 !important;
+  font-weight:700 !important;
+}

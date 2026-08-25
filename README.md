@@ -543,7 +543,7 @@ Progress is stored separately in localStorage. You can jump to any drill, skip f
 
 Researched against PTC Arbortext Editor 8.3 documentation and adjusted the trainer toward the standard editor:
 - Menu bar now includes File, Edit, Find, View, Insert, Table, Tools, Workflow, Help. Workflow is explicitly a trainer/CSDB extension.
-- Tools uses the Arbortext-oriented training set: Context Rules, Check Completeness, and Document Type Viewer.
+- Tools now uses Arbortext terminology: Context Rules, Check Completeness, Show Context, Document Type Viewer.
 - Check Completeness uses CMP/INC status cues and a Completeness Check Log-style window.
 - Added Find Tag/Attribute.
 - Added Change Markup simulation.
@@ -714,29 +714,8 @@ Find Tag/Attribute includes Tag Name, Attribute Name, Attribute Value, search op
 
 The Find menu now opens the appropriate tab instead of using unrelated dialogs, and the Beginner Drills were updated to teach this workflow. Structural-find drills verify that the requested tag was actually found.
 
-
-## v7.16 — Remove non-Arbortext Show Context
-
-- Removed the standalone **Tools > Show Context** command because it does not correspond to a stock Arbortext Editor command and duplicated information already exposed through context-sensitive Insert Markup / Quick Tags.
-- Removed the related implementation and drill evidence.
-- Replaced both Show Context drills with practical Arbortext-style tasks while preserving the 5 × 20 (100 drill) curriculum.
-- Tools is intentionally leaner: Context Rules, Check Completeness, and Document Type Viewer remain.
-
-
-## v7.16 — Document Type Viewer refinement
-- Reworked Document Type Viewer into an Arbortext-inspired hierarchy view.
-- Added element selection plus Find Forward, Find Backward, Update Display and context-valid Insert actions.
-- Kept the viewer intentionally compact so it supports learning without adding another dense editor panel.
-
-
-## v7.17 — Document Type Viewer insertion state
-
-- Insert is now enabled only when the selected element type is valid at the current insertion location.
-- Invalid insertions are shown with a disabled grey button instead of an active accent button.
-- Viewer selection remains highlighted after Update Display / Find navigation.
-
-
-## v7.19 — Document Type Viewer next-valid insertion
-- Fixed Document Type Viewer Insert staying disabled because it inherited the main toolbar's Insert Position setting.
-- Document Type Viewer now follows Arbortext behavior more closely: Insert targets the next valid location after the current cursor/selection.
-- Insert availability is calculated independently of the normal Insert Position control.
+## v7.15 — Completeness success feedback
+- When Check Completeness finds no errors, no popup is shown.
+- `No completeness errors found` appears in bold dark green in the status bar for 2 seconds.
+- The `CMP` indicator receives a matching subtle green highlight for 2 seconds.
+- Both then return to their normal appearance.

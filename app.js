@@ -309,6 +309,7 @@ function openMainMenu(menu){
     else if(menu==="tools")showModal("Tools",`<div class="export-grid">
       <button class="export-option" onclick="checkCompleteness()"><strong>Check Completeness</strong><span>Check required structure, attributes, references and empty elements</span></button>
       <button class="export-option" onclick="toggleContextRules()"><strong>${state.contextRulesOn?"✓ ":""}Context Rules</strong><span>Interactive validity checking while editing</span></button>
+      <button class="export-option" onclick="showContextInfo()"><strong>Show Context</strong><span>Show elements valid at the current position</span></button>
       <button class="export-option" onclick="showDocumentTypeViewer()"><strong>Document Type Viewer</strong><span>Inspect the training schema and valid children</span></button>
     </div><div class="menu-note">Project BREX and STE checks in this trainer are additional S1000D/project layers, not core Arbortext menu items.</div>`);
     else if(menu==="review")showModal("Workflow (trainer extension)",`<p>Current state: <strong>${esc(state.model?.meta?.workflow||"—")}</strong></p><p>This menu represents the CSDB/S1000D workflow integration around Arbortext, not a stock Arbortext menu.</p>`);
@@ -2149,200 +2150,10 @@ function showInsertMarkupDialog(){
 }
 function insertTableShortcut(){const old=$("#elementSelect")?.value;try{if(validElementsForInsertion(currentInsertPosition()).includes("table"))insertElement("table");else showTableEditor()}finally{if($("#elementSelect")&&old)$("#elementSelect").value=old}noteShortcut("insert-table")}
 function toggleContextRules(){state.contextRulesOn=!state.contextRulesOn;const s=$("#contextRulesStatus");if(s){s.classList.toggle("active",state.contextRulesOn);s.textContent=state.contextRulesOn?"CTX":"CTX OFF"}toast(`Context Rules ${state.contextRulesOn?"ON":"OFF"}`);state.lastLearningAction={kind:"context-rules",value:state.contextRulesOn}}
-function documentTypeTreeRows(){
- const current=currentSelectionContext();
- const currentType=current.kind==="root"?"mainProcedure":current.node.type;
- const seen=new Set();
- function branch(type,depth){
-   if(seen.has(type))return "";
-   seen.add(type);
-   const kids=schema[type]||[];
-   const isCurrent=type===currentType;
-   const marker=kids.length?"▾":"·";
-   let html=`<button type="button" class="dtd-tree-row${isCurrent?" ctx":""}" data-dtd-type="${esc(type)}" style="--dtd-depth:${depth}"><span class="dtd-tree-marker">${marker}</span><span>&lt;${esc(type)}&gt;</span></button>`;
-   kids.forEach(k=>{html+=branch(k,depth+1)});
-   return html;
- }
- return branch("mainProcedure",0);
-}
-function documentTypeViewerInsertionTarget(type){
- if(!type||!state.model)return null;
- const allowedIn=context=>validChildrenForContext(context).includes(type);
- const s=currentSelectionContext();
-
- // Arbortext Document Type Viewer inserts the selected markup at the next
- // valid location after the cursor. This is intentionally independent of
- // the main Insert Position toolbar setting.
- if(s.kind==="root"){
-   return allowedIn("mainProcedure")?{kind:"root",mode:"inside",label:"mainProcedure"}:null;
- }
-
- // A valid child location in the current element is the closest location.
- if(allowedIn(s.node.type))return {kind:"node",id:s.node.id,mode:"inside",label:s.node.type};
-
- // Then try immediately after the current element, walking out through
- // ancestor levels as needed.
- let r=getNodeById(s.node.id);
- while(r){
-   const parentContext=r.parent?.type||"mainProcedure";
-   if(allowedIn(parentContext))return {kind:"node",id:r.node.id,mode:"after",label:parentContext};
-   if(!r.parent)break;
-   r=getNodeById(r.parent.id);
- }
-
- // Finally search forward for the next element that can contain the type.
- const flat=flattenSearchNodes();
- const start=Math.max(-1,flat.findIndex(n=>n.id===s.node.id));
- for(let i=start+1;i<flat.length;i++){
-   if(allowedIn(flat[i].type))return {kind:"node",id:flat[i].id,mode:"inside",label:flat[i].type};
- }
- return null;
-}
-function updateDocumentTypeViewerInsertState(){
- const btn=$("#dtdInsert");if(!btn)return;
- const type=state.dtdViewerType;
- const target=documentTypeViewerInsertionTarget(type);
- const allowed=!!target;
- btn.disabled=!allowed;
- btn.classList.toggle("accent",allowed);
- btn.title=allowed?`Insert <${type}> at the next valid location`:`No valid location for <${type||"element"}> after the current cursor position`;
-}
-function updateDocumentTypeViewerDisplay(){
- const tree=$("#dtdTree");if(!tree)return;
- tree.innerHTML=documentTypeTreeRows();
- bindDocumentTypeViewerRows();
- const current=currentSelectionContext();
- const label=$("#dtdCurrentContext");
- if(label)label.textContent=current.kind==="root"?"mainProcedure":current.node.type;
- const active=$(`[data-dtd-type="${state.dtdViewerType}"]`);if(active)active.classList.add("dtd-picked");
- updateDocumentTypeViewerInsertState();
-}
-function bindDocumentTypeViewerRows(){
- $$("[data-dtd-type]").forEach(row=>row.onclick=()=>{
-   $$("[data-dtd-type]").forEach(r=>r.classList.remove("dtd-picked"));
-   row.classList.add("dtd-picked");
-   state.dtdViewerType=row.dataset.dtdType;
-   const picked=$("#dtdPickedType");if(picked)picked.textContent=`<${state.dtdViewerType}>`;
-   updateDocumentTypeViewerInsertState();
- });
-}
-function findDocumentTypeFromViewer(direction=1){
- const type=state.dtdViewerType;
- if(!type)return toast("Select an element type in the viewer first");
- const flat=flattenSearchNodes();
- const hits=flat.filter(n=>n.type===type);
- if(!hits.length)return toast(`No <${type}> element found in this document`);
- let i=hits.findIndex(n=>n.id===state.selectedId);
- if(direction>0)i=(i+1+hits.length)%hits.length;else i=(i-1+hits.length)%hits.length;
- const target=hits[i];selectElement(target.id);revealSelectedInEditor();
- state.lastLearningAction={kind:"doctype-find",type,direction};
- updateDocumentTypeViewerDisplay();
-}
-function insertDocumentTypeFromViewer(){
- const type=state.dtdViewerType;
- if(!type)return toast("Select an element type in the viewer first");
- const target=documentTypeViewerInsertionTarget(type);
- if(!target)return toast(`No valid location for <${type}> after the current cursor position`);
- if(!state.model)return toast("No document is open");
- if(isLocked())return toast("Approved documents are locked");
-
- // Insert directly at the location resolved by the Document Type Viewer.
- // Do not route this through the toolbar's Insert Position control: the
- // viewer has its own "next valid location" behaviour.
- let nodes=null;
- let index=-1;
- let parent=null;
- let position=target.mode;
- let context="mainProcedure";
-
- if(target.kind==="root"){
-   nodes=state.model.nodes;
-   index=nodes.length-1;
-   position="inside";
-   context="mainProcedure";
- }else{
-   const r=getNodeById(target.id);
-   if(!r)return toast(`The insertion location for <${type}> is no longer available`);
-   if(target.mode==="inside"){
-     r.node.children=r.node.children||[];
-     nodes=r.node.children;
-     index=nodes.length-1;
-     parent=r.node;
-     context=r.node.type;
-   }else{
-     nodes=r.nodes;
-     index=r.index;
-     parent=r.parent;
-     context=r.parent?.type||"mainProcedure";
-   }
- }
-
- const allowed=validChildrenForContext(context);
- if(!allowed.includes(type)){
-   updateDocumentTypeViewerInsertState();
-   return toast(`<${type}> is not valid in <${context}>`);
- }
-
- pushUndo(`Insert <${type}>`);
- const n={id:uid(),type,text:defaultText(type)};
- if(type==="table"){n.rows=[["Item","Value"],["Example","Value"]];n.headerRow=true;}
- if(type==="step")n.children=[];
-
- if(position==="inside") nodes.push(n);
- else if(position==="before") nodes.splice(index,0,n);
- else nodes.splice(index+1,0,n);
-
- state.selectedId=n.id;
- state.rootSelected=false;
- state.history.unshift(hist(`Inserted <${type}> from Document Type Viewer in <${context}>`));
- state.lastLearningAction={kind:"doctype-insert",type};
- state.drillEvidence=state.drillEvidence||{};
- state.drillEvidence.doctypeInserted=type;
- markDirty();
-
- renderAuthor();
- renderTree();
- refreshInsertOptions();
- updateContext();
- syncSourcePassive();
- renderPreview();
- renderElementCoach();
- revealSelectedInEditor();
- if(typeof renderDmcBreakdown==="function")renderDmcBreakdown();
- if(state.drillSession)updateDrillStats();
- if($("#cursorStatus"))$("#cursorStatus").textContent=`Inserted <${type}> from Document Type Viewer`;
- toast(`Inserted <${type}>`);
-
- // Keep the viewer open and synchronize it with the newly inserted element.
- updateDocumentTypeViewerDisplay();
- return n;
-}
-function showDocumentTypeViewer(){
- const current=currentSelectionContext();
- state.dtdViewerType=current.kind==="root"?"mainProcedure":current.node.type;
- showModal("Document Type Viewer",`
-   <div class="dtd-viewer-shell">
-     <div class="dtd-viewer-head">Current context: <strong>&lt;<span id="dtdCurrentContext">${esc(state.dtdViewerType)}</span>&gt;</strong></div>
-     <div id="dtdTree" class="dtd-tree">${documentTypeTreeRows()}</div>
-     <div class="dtd-viewer-selected">Selected type: <strong id="dtdPickedType">&lt;${esc(state.dtdViewerType)}&gt;</strong></div>
-     <div class="dtd-viewer-actions">
-       <button type="button" class="btn" id="dtdFindBack">Find Backward</button>
-       <button type="button" class="btn" id="dtdFindForward">Find Forward</button>
-       <button type="button" class="btn" id="dtdUpdate">Update Display</button>
-       <button type="button" class="btn accent" id="dtdInsert">Insert</button>
-     </div>
-   </div>
-   <p class="menu-note">Arbortext-style training view: inspect the document type hierarchy, find elements in the document, and insert the selected element when it is valid at the current location.</p>`);
- bindDocumentTypeViewerRows();
- const active=$(`[data-dtd-type="${state.dtdViewerType}"]`);if(active)active.classList.add("dtd-picked");
- updateDocumentTypeViewerInsertState();
- $("#dtdFindBack").onclick=()=>findDocumentTypeFromViewer(-1);
- $("#dtdFindForward").onclick=()=>findDocumentTypeFromViewer(1);
- $("#dtdUpdate").onclick=updateDocumentTypeViewerDisplay;
- $("#dtdInsert").onclick=insertDocumentTypeFromViewer;
- state.lastLearningAction={kind:"doctype-viewer"};
- state.drillEvidence=state.drillEvidence||{};state.drillEvidence.doctypeOpened=true
-}
+function showContextInfo(){const s=currentSelectionContext(),ic=insertionContextFor(currentInsertPosition()),opts=validElementsForInsertion(currentInsertPosition());showModal("Show Context",`<p>Selected: <strong>${esc(s.kind==="root"?"mainProcedure":s.node.type)}</strong></p><p>Insertion context: <strong>${esc(ic.context)}</strong></p><p>Valid markup:</p><div class="dtd-viewer">${opts.map(x=>`&lt;${esc(x)}&gt;`).join("  ")||"(none)"}</div>`);state.lastLearningAction={kind:"show-context"};
+ state.drillEvidence=state.drillEvidence||{};state.drillEvidence.showContextOpened=true}
+function showDocumentTypeViewer(){const current=currentSelectionContext();const rows=Object.entries(schema).map(([p,c])=>`<div class="${(current.kind==="root"?"mainProcedure":current.node.type)===p?"ctx":""}">&lt;${esc(p)}&gt; → ${c.length?c.map(x=>`&lt;${esc(x)}&gt;`).join(", "):"text / leaf"}</div>`).join("");showModal("Document Type Viewer",`<div class="dtd-viewer">${rows}</div><p class="menu-note">Training schema view. In Arbortext, Document Type Viewer exposes the document structure and helps insert markup at valid locations.</p>`);state.lastLearningAction={kind:"doctype-viewer"};
+ state.drillEvidence=state.drillEvidence||{};state.drillEvidence.doctypeOpened=true}
 function showShortcutReference(){showModal("Keyboard Shortcuts",`<div class="dtd-viewer"><b>Editing</b><br>Ctrl+Z Undo · Ctrl+Y Redo · Ctrl+S Save · Ctrl+F Find/Replace · Ctrl+D Modify Attributes<br><br><b>Markup</b><br>Enter Quick Tags · Ctrl+M Insert Markup list · Ctrl+Shift+M Insert Markup dialog<br><br><b>Views</b><br>Ctrl+Shift+L cycle tag display · Alt+Ctrl+O Document Map · Alt+Ctrl+N Normal · Ctrl+L Refresh · F6 cycle focus<br><br><b>Table</b><br>Alt+Shift+T Insert Table</div><p class="menu-note">These are based on PTC Arbortext Editor default mappings. The trainer implements the subset that maps cleanly to this browser simulation.</p>`)}
 
 function findElementBoundary(which){
@@ -2360,7 +2171,20 @@ function checkCompleteness(){const issues=validate();const hasErr=issues.some(i=
  state.drillEvidence=state.drillEvidence||{};
  state.drillEvidence.completenessRan=true;
  state.drillEvidence.completenessCount=(state.drillEvidence.completenessCount||0)+1;
- if(!hasErr){$("#cursorStatus").textContent="No completeness errors found";return}const body=`<div class="completeness-log">${issues.map((i,n)=>`<div class="issue" data-complete-index="${n}"><strong>${esc(i.label)}</strong><br>${esc(i.msg)}</div>`).join("")}</div>`;showModal("Completeness Check Log",body);$$('[data-complete-index]').forEach(b=>b.ondblclick=()=>{$("#modalBackdrop").classList.add("hidden");showRightTab("validation")})}
+ if(!hasErr){
+   const status=$("#cursorStatus");
+   if(status){
+     status.textContent="No completeness errors found";
+     status.classList.add("completeness-ok-flash");
+     setTimeout(()=>status.classList.remove("completeness-ok-flash"),2000);
+   }
+   if(s){
+     s.classList.add("completeness-ok-flash");
+     setTimeout(()=>s.classList.remove("completeness-ok-flash"),2000);
+   }
+   return;
+ }
+ const body=`<div class="completeness-log">${issues.map((i,n)=>`<div class="issue" data-complete-index="${n}"><strong>${esc(i.label)}</strong><br>${esc(i.msg)}</div>`).join("")}</div>`;showModal("Completeness Check Log",body);$$('[data-complete-index]').forEach(b=>b.ondblclick=()=>{$("#modalBackdrop").classList.add("hidden");showRightTab("validation")})}
 function refreshEditorScreen(){renderAuthor();renderTree();noteShortcut("refresh");$("#cursorStatus").textContent="Screen refreshed"}
 function cycleFocus(){const targets=[$("#authorEditor"),$("#contentTree"),$("#elementSelect")].filter(Boolean);state.focusCycleIndex=(state.focusCycleIndex+1)%targets.length;targets[state.focusCycleIndex].focus?.();noteShortcut("focus");$("#cursorStatus").textContent=["Edit view","Document Map","Markup toolbar"][state.focusCycleIndex]||"Focus changed"}
 function changeMagnification(delta){state.zoomLevel=Math.max(-1,Math.min(1,(state.zoomLevel||0)+delta));const e=$("#authorEditor");e?.classList.toggle("zoom-up",state.zoomLevel>0);e?.classList.toggle("zoom-down",state.zoomLevel<0);state.lastLearningAction={kind:"shortcut",name:delta>0?"zoom-in":"zoom-out"}}
@@ -3212,7 +3036,7 @@ function showHistory(){showModal("Document history",`<div class="history-list">$
 function showHelp(){showModal("TechAuthor Learner — Help",`
 <div class="learning-card">
   <h4>What this is</h4>
-  <p>A browser-based <strong>Arbortext-like structured authoring trainer</strong> (v7.15). Practice Document Map navigation, Quick Tags, context-sensitive insert, Modify Attributes, Check Completeness, and an S1000D-style workflow without a full CSDB.</p>
+  <p>A browser-based <strong>Arbortext-like structured authoring trainer</strong> (v7.13). Practice Document Map navigation, Quick Tags, context-sensitive insert, Modify Attributes, Check Completeness, and an S1000D-style workflow without a full CSDB.</p>
 </div>
 <div class="learning-card" style="margin-top:8px">
   <h4>Learning Mode</h4>
