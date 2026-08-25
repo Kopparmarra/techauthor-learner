@@ -784,3 +784,7 @@ The check also now adds lightweight document-type checks for invalid element pla
 - “Switch ... to Balanced” starts on Strict.
 - “Switch ... back to Strict” starts on Balanced.
 - This prevents a drill from already being in the target state when it loads.
+
+## v7.25 — Attribute drill clarity
+- Chapter 5 drill 5 now explicitly says `Set applicRefId=APP-01 on the step.`
+- The generic attribute drill hint now reminds the learner to use the exact attribute/value shown in the task.
