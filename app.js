@@ -2216,10 +2216,11 @@ function quickTagsCandidateGroups(){
 
  // PTC Quick Tags behavior is cursor-location based. In this simulator we use
  // the currently selected element plus insertion position as the cursor context.
- const inside = validChildrenForContext(s.kind==="root"?"mainProcedure":s.node.type);
+ const insideContext=s.kind==="root"?"mainProcedure":s.node.type;
+ const inside = applyDocumentOccurrenceConstraints(validChildrenForContext(insideContext),insideContext);
  let siblingContext = "mainProcedure";
  if(s.kind==="node") siblingContext = s.parent?.type||"mainProcedure";
- const siblings = validChildrenForContext(siblingContext);
+ const siblings = applyDocumentOccurrenceConstraints(validChildrenForContext(siblingContext),siblingContext);
 
  // "Below divider" = child elements valid inside current element.
  const below = inside.map(type=>({type,mode:"inside",label:type,hint:"insert inside"}));
@@ -2363,9 +2364,20 @@ function insertionContextFor(position=currentInsertPosition()){
  const parentContext=s.parent?.type||"mainProcedure";
  return {position,context:parentContext,nodes:s.nodes,index:s.index,parent:s.parent,selected:s.node};
 }
+function applyDocumentOccurrenceConstraints(elements,context){
+ let out=[...(elements||[])];
+ // The training document type/BREX requires exactly one top-level title.
+ // Normal authoring must not offer a second title; imported/invalid content
+ // may still contain duplicates so Check Completeness can teach repair.
+ if(context==="mainProcedure"){
+   const hasTitle=(state.model?.nodes||[]).some(n=>n.type==="title");
+   if(hasTitle)out=out.filter(el=>el!=="title");
+ }
+ return out;
+}
 function validElementsForInsertion(position=currentInsertPosition()){
  const ic=insertionContextFor(position);
- return validChildrenForContext(ic.context);
+ return applyDocumentOccurrenceConstraints(validChildrenForContext(ic.context),ic.context);
 }
 function validChildrenForContext(context){
  const schemaAllowed=[...(schema[context]||[])];
@@ -2549,8 +2561,11 @@ function insertElement(type){
 
  if(!schemaAllowed.includes(type))
    throw new Error(`Schema blocks <${type}> in <${ic.context}>.`);
- if(!allowed.includes(type))
-   throw new Error(`BREX blocks <${type}> in <${ic.context}>.`);
+ if(!allowed.includes(type)){
+   if(type==="title"&&ic.context==="mainProcedure"&&(state.model?.nodes||[]).some(n=>n.type==="title"))
+     throw new Error("A title already exists. This document allows exactly one top-level <title>.");
+   throw new Error(`BREX/context rules block <${type}> in <${ic.context}>.`);
+ }
 
  pushUndo(`Insert <${type}>`);
 
@@ -2673,10 +2688,24 @@ function defaultText(type){
 }
 function deleteSelected(){
  if(isLocked())return alert("Approved documents are locked.");
- pushUndo("Delete element");
  const r=getNodeById(state.selectedId);if(!r)return;
- if(r.node.type==="title")return alert("The title is required by the demo BREX rules.");
- r.nodes.splice(r.index,1);state.selectedId=r.parent?.id||state.model.nodes[0]?.id;state.history.unshift(hist(`Deleted <${r.node.type}>`));markDirty();renderAuthor();
+
+ // BREX requires exactly one title. Deleting an extra title is valid;
+ // only deleting the last remaining title must be blocked.
+ if(r.node.type==="title"){
+   const titleCount=(state.model?.nodes||[]).filter(n=>n.type==="title").length;
+   if(titleCount<=1)return alert("The title is required by the demo BREX rules.");
+ }
+
+ pushUndo("Delete element");
+ r.nodes.splice(r.index,1);
+ state.selectedId=r.parent?.id||state.model.nodes[0]?.id;
+ state.history.unshift(hist(`Deleted <${r.node.type}>`));
+ markDirty();
+ renderAuthor();
+ renderTree();
+ refreshInsertOptions();
+ updateContext();
 }
 function moveSelected(delta){
  if(isLocked())return;

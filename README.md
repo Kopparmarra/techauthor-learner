@@ -742,3 +742,16 @@ The check also now adds lightweight document-type checks for invalid element pla
 - Removed the inaccessible drill instruction to open the Validation/Completeness tab on the right while Learning occupies the right pane.
 - Drill 6 in Chapter 4 now asks the learner to run Check Completeness and open the bottom Issues tab.
 - The following drill was adjusted to avoid duplicating the same task.
+
+## v7.18 — Title deletion / BREX drill fix
+- Fixed Chapter 4 drill 11: when two titles exist, the second title can now be deleted.
+- The BREX guard only blocks deletion when the selected title is the last remaining title.
+- Prevented a blocked deletion from creating a useless Undo entry.
+- Document Map/context are refreshed after deletion.
+
+## v7.19 — Single-title authoring constraint
+- Normal authoring no longer offers a second top-level `title` once one already exists.
+- The constraint applies to Insert valid element and Quick Tags/sibling insertion choices.
+- Direct insertion is also guarded with a clear occurrence-constraint message.
+- Invalid/imported documents may still contain duplicate titles so Check Completeness and repair drills can demonstrate how to fix them.
+- Chapter 4 now explicitly frames the duplicate-title drill as an imported-document repair scenario.
