@@ -788,3 +788,9 @@ The check also now adds lightweight document-type checks for invalid element pla
 ## v7.25 — Attribute drill clarity
 - Chapter 5 drill 5 now explicitly says `Set applicRefId=APP-01 on the step.`
 - The generic attribute drill hint now reminds the learner to use the exact attribute/value shown in the task.
+
+## v7.26 — Workflow drill clarity
+- “Submit the DM for review” now explicitly points to `Properties > Document State > Submit for review`.
+- “Return to author” now explicitly points to the same Document State controls.
+- “Check in” now explicitly points to the top-bar Check in button.
+- Added workflow-specific hints so these drills no longer rely on the generic authoring-action text.
