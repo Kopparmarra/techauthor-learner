@@ -3136,7 +3136,18 @@ function renderBrexPanel(){
 }
 function showRightTab(name){
  $$(".right-pane .pane-tab").forEach(b=>b.classList.toggle("active",b.dataset.righttab===name));
- $("#propertiesTab").classList.toggle("hidden",name!=="properties");$("#applicabilityTab").classList.toggle("hidden",name!=="applicability");$("#referencesTab").classList.toggle("hidden",name!=="references");$("#brexTab").classList.toggle("hidden",name!=="brex");$("#learningTab").classList.toggle("hidden",name!=="learning");$("#validationTab").classList.toggle("hidden",name!=="validation"); if(name==="references")renderReferences(); if(name==="brex")renderBrexPanel(); if(name==="learning")updateLearningModeUi();
+ $("#propertiesTab").classList.toggle("hidden",name!=="properties");$("#applicabilityTab").classList.toggle("hidden",name!=="applicability");$("#referencesTab").classList.toggle("hidden",name!=="references");$("#brexTab").classList.toggle("hidden",name!=="brex");$("#learningTab").classList.toggle("hidden",name!=="learning");$("#validationTab").classList.toggle("hidden",name!=="validation");
+
+ // Durable evidence for Learning drills: the learner must be able to
+ // open another right-hand tab, return to Learning, and then click Check.
+ state.drillEvidence=state.drillEvidence||{};
+ state.drillEvidence.rightTabsOpened=state.drillEvidence.rightTabsOpened||{};
+ state.drillEvidence.rightTabsOpened[name]=true;
+ state.lastLearningAction={kind:"righttab",name};
+
+ if(name==="references")renderReferences();
+ if(name==="brex")renderBrexPanel();
+ if(name==="learning")updateLearningModeUi();
 }
 function syncControlsFromModel(){
  if(!state.model)return;

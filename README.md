@@ -755,3 +755,9 @@ The check also now adds lightweight document-type checks for invalid element pla
 - Direct insertion is also guarded with a clear occurrence-constraint message.
 - Invalid/imported documents may still contain duplicate titles so Check Completeness and repair drills can demonstrate how to fix them.
 - Chapter 4 now explicitly frames the duplicate-title drill as an imported-document repair scenario.
+
+## v7.20 — Right-pane Learning drill state
+- Fixed BREX Rules drill: opening BREX Rules is now recorded as durable drill evidence.
+- The learner can return to Learning and click Check without losing credit.
+- The same fix was applied to References and generic right-pane-tab drills.
+- Drill wording now explicitly says to inspect the tab, return to Learning, and click Check.
