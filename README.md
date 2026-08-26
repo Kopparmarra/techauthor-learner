@@ -811,3 +811,8 @@ It contains 10 progressively harder authoring scenarios:
 10. Resolve a returned DM and check it in
 
 Scenario Practice deliberately does not tell the learner which buttons to press. Each scenario has a short context and a task, with hidden outcome-based acceptance criteria. On a failed check the learner sees only how many criteria remain. Hints become available after two failed attempts. On success the criteria are revealed and the scenario is marked complete in local storage.
+
+## v7.28 — Arbortext Basics exercise loader fix
+- Fixed `Start selected exercise` opening `Select an exercise first`.
+- Arbortext Basics exercises now load directly by their own exercise ID.
+- They no longer depend on the hidden S1000D Practice exercise selector, whose DM-type filtering could remove the selected Arbortext exercise.

@@ -3307,25 +3307,9 @@ function renderArbortextBasicDetail(){
  $$("[data-basic]").forEach(b=>b.classList.toggle("active",b.dataset.basic===key));
  host.innerHTML=`<h4>${esc(m.title)}</h4><p>${esc(m.intro)}</p><ol>${m.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol><div class="learning-callout"><strong>Trainer focus</strong>Repeat the interaction until the editor behavior feels predictable.</div>`;
 }
-function startSelectedBasicExercise(){
- const m=arbortextBasicModules[state.selectedBasic||"tags"];if(!m)return;
- const ex=exercises[m.exercise];if(!ex)return;
- // Load directly without depending on the hidden exercise select.
- const oldValue=$("#exerciseSelect").value;
- renderExerciseInfo();
- $("#exerciseSelect").value=m.exercise;
- loadExercise();
- $("#exerciseSelect").value=oldValue;
- showLearningView("arbortext");
- renderArbortextBasicDetail();
- toast(`${m.title} exercise loaded`);
-}
-
-function loadExercise(){
-  const select=$("#exerciseSelect");
-  const key=select?.value;
+function loadExerciseByKey(key){
   const ex=key?exercises[key]:null;
-  if(!ex||!state.model)return alert("Select an exercise first.");
+  if(!ex||!state.model)return false;
   pushUndo(`Load exercise: ${ex.title}`);
 
   state.trainingExercise={id:key,title:ex.title};
@@ -3346,6 +3330,23 @@ function loadExercise(){
   if($("#currentDocLabel"))$("#currentDocLabel").textContent=`DM ${state.model.meta.dmc}`;
   if($("#cursorStatus"))$("#cursorStatus").textContent=`Exercise loaded: ${ex.title}`;
   toast("Exercise loaded");
+  return true;
+}
+
+function startSelectedBasicExercise(){
+ const m=arbortextBasicModules[state.selectedBasic||"tags"];if(!m)return;
+ // Arbortext Basics has its own exercise IDs. Do not route them through the
+ // hidden S1000D Practice selector, whose context filter can remove those IDs.
+ if(!loadExerciseByKey(m.exercise))return alert("This Arbortext exercise is unavailable.");
+ showLearningView("arbortext");
+ renderArbortextBasicDetail();
+ toast(`${m.title} exercise loaded`);
+}
+
+function loadExercise(){
+  const select=$("#exerciseSelect");
+  const key=select?.value;
+  if(!loadExerciseByKey(key))return alert("Select an exercise first.");
 }
 function renderExerciseInfo(){
  const select=$("#exerciseSelect");if(!select)return;
