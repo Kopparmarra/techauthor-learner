@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>TechAuthor Learner v7.14</title>
-  <link rel="stylesheet" href="styles.css?v=7.28">
+  <link rel="stylesheet" href="styles.css?v=7.29">
 </head>
 <body>
 <div id="app">
@@ -13,7 +13,7 @@
       <div class="brand-mark">TA</div>
       <div>
         <div class="brand-title">TechAuthor Learner</div>
-        <div class="brand-subtitle">Arbortext-like structured authoring trainer · v7.28</div>
+        <div class="brand-subtitle">Arbortext-like structured authoring trainer · v7.29</div>
       </div>
     </div>
     <div class="project-strip">
@@ -350,18 +350,15 @@
     <div id="structuredPracticeView" class="learning-view hidden">
       <div class="learning-card">
         <h4>Structured Authoring / S1000D Practice</h4>
-        <p>Use these after the basic editor movements feel natural.</p>
+        <p>Guided exercises with visible goals. Choose one exercise, load it, then work in the normal editor.</p>
       </div>
       <label class="practice-label">Exercise
         <select id="exerciseSelect"></select>
       </label>
-      <button id="loadExerciseBtn" class="btn accent full">Load exercise</button>
       <div id="exerciseInfo" class="learning-card"></div>
-      <div class="learning-divider"></div>
-      <div id="guidedTaskCard" class="learning-card"></div>
-      <button id="startGuidedTaskBtn" class="btn accent full">Start guided task</button>
-      <button id="scoreGuidedTaskBtn" class="btn full">Check progress / score</button>
-      <div id="guidedScore"></div>
+      <button id="loadExerciseBtn" class="btn accent full">Load exercise</button>
+      <button id="scoreExerciseBtn" class="btn full">Check progress</button>
+      <div id="exerciseScore"></div>
     </div>
 
 
@@ -407,8 +404,8 @@
 </div>
 
 <!-- Load order: pure data → drills curriculum → application runtime (no bundler). -->
-<script src="js/schema.js?v=7.28"></script>
-<script src="js/drills.js?v=7.28"></script>
-<script src="app.js?v=7.28"></script>
+<script src="js/schema.js?v=7.29"></script>
+<script src="js/drills.js?v=7.29"></script>
+<script src="app.js?v=7.29"></script>
 </body>
 </html>

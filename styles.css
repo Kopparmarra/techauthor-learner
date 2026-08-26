@@ -1005,3 +1005,19 @@ button:disabled{opacity:.45;cursor:not-allowed}
  .scenario-actions{grid-template-columns:1fr}
  .scenario-actions .btn{width:100%;max-width:100%;box-sizing:border-box}
 }
+
+
+/* v7.29 — unified S1000D Practice flow */
+#structuredPracticeView .s1000-goals{
+  margin-top:9px;
+  padding-top:8px;
+  border-top:1px solid #ddd;
+}
+#structuredPracticeView .s1000-goals>strong{
+  display:block;
+  margin-bottom:5px;
+  font-size:10px;
+}
+#structuredPracticeView #scoreExerciseBtn{
+  margin-top:0;
+}

@@ -816,3 +816,9 @@ Scenario Practice deliberately does not tell the learner which buttons to press.
 - Fixed `Start selected exercise` opening `Select an exercise first`.
 - Arbortext Basics exercises now load directly by their own exercise ID.
 - They no longer depend on the hidden S1000D Practice exercise selector, whose DM-type filtering could remove the selected Arbortext exercise.
+
+## v7.29 — Simplified S1000D Practice
+- Removed the separate `Guided Task` block from S1000D Practice.
+- S1000D Practice now has one clear flow: choose exercise → read visible goals → Load exercise → edit → Check progress.
+- The former software rollback guided task is now a normal selectable exercise.
+- Progress checking is now exercise-specific instead of applying rollback criteria to unrelated procedure exercises.

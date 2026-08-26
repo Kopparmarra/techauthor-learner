@@ -90,6 +90,11 @@ const guidedTask={title:"Create a software rollback procedure",scenario:"Roll ba
  {label:"State MAINTENANCE mode",test:()=>/MAINTENANCE mode/i.test(flattenText(state.model?.nodes||[]))}
 ]};
 const exercises={
+ rollback:{title:"Build a software rollback procedure",description:"Create a software rollback procedure for Radar Processing Service from 4.3.1 to approved baseline 4.2.7.",nodes:()=>[
+   {id:uid(),type:"title",text:"Software rollback procedure"},
+   {id:uid(),type:"para",text:"Create the rollback procedure from this starter structure."},
+   {id:uid(),type:"sectionTitle",text:"Procedure"}
+ ]},
  mixed:{title:"Mixed validation challenge",description:"Correct a mixture of BREX, STE and structure problems.",nodes:()=>[{id:uid(),type:"title",text:"Install update package"},{id:uid(),type:"para",text:"Prior to installation, you should utilize the maintenance laptop; make sure the package is correct."},{id:uid(),type:"step",text:"Install the package.",children:[]},{id:uid(),type:"note",text:"If installation fails, repeat as necessary."}]},
  schema:{title:"Schema challenge",description:"Repair an incomplete procedure structure.",nodes:()=>[{id:uid(),type:"title",text:"Verify software baseline"},{id:uid(),type:"step",text:"Verify the software version.",children:[]}]},
  brex:{title:"BREX challenge",description:"Make this procedure comply with the active project BREX.",nodes:()=>[{id:uid(),type:"title",text:"Replace software package"},{id:uid(),type:"step",text:"Replace the package.",children:[{id:uid(),type:"cmd",text:"Select Install."}]}]},

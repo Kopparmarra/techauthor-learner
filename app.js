@@ -105,8 +105,7 @@ function criticalClickAction(id,el){
     case "skipDrillBtn": return skipBeginnerDrill();
     case "startBasicExerciseBtn": return startSelectedBasicExercise();
     case "loadExerciseBtn": return loadExercise();
-    case "startGuidedTaskBtn": return startGuidedTask();
-    case "scoreGuidedTaskBtn": return scoreGuidedTask();
+    case "scoreExerciseBtn": return scoreSelectedExercise();
     case "scenarioStartBtn": return startScenario();
     case "scenarioCheckBtn": return checkScenario();
     case "scenarioHintBtn": return showScenarioHint();
@@ -196,7 +195,7 @@ document.addEventListener("click",e=>{
         "applyElementPropsBtn","addCommentBtn","applyApplicabilityBtn","beginnerDrillsBtn",
         "arbortextBasicsBtn","structuredPracticeBtn","elementCoachBtn","startDrillsBtn",
         "checkDrillBtn","nextDrillBtn","skipDrillBtn","startBasicExerciseBtn","loadExerciseBtn",
-        "startGuidedTaskBtn","scoreGuidedTaskBtn","scenarioStartBtn","scenarioCheckBtn","scenarioHintBtn","scenarioNextBtn"
+        "scoreExerciseBtn","scenarioStartBtn","scenarioCheckBtn","scenarioHintBtn","scenarioNextBtn"
       ].includes(id);
       if(handled){
         e.preventDefault();e.stopImmediatePropagation();
@@ -516,6 +515,7 @@ function contextExerciseCatalog(){
  const labels={procedure:"Procedure structure challenge",fault:"Fault-isolation challenge",safety:"Safety placement challenge",system:"System-description challenge",operator:"Operator guidance challenge",software:"Software reference challenge",reference:"Reference-data challenge"};
  return [
    {id:"ctx-"+type,label:labels[type]},
+   ...(type==="procedure"?[{id:"rollback",label:"Build a software rollback procedure"}]:[]),
    {id:"mixed",label:"Mixed validation challenge"},
    {id:"schema",label:"Schema challenge"},
    {id:"brex",label:"BREX challenge"},
@@ -3329,6 +3329,7 @@ function loadExerciseByKey(key){
   refreshInsertOptions();updateContext();syncSourcePassive();renderPreview();
   if($("#currentDocLabel"))$("#currentDocLabel").textContent=`DM ${state.model.meta.dmc}`;
   if($("#cursorStatus"))$("#cursorStatus").textContent=`Exercise loaded: ${ex.title}`;
+  if($("#exerciseScore"))$("#exerciseScore").innerHTML="";
   toast("Exercise loaded");
   return true;
 }
@@ -3348,14 +3349,100 @@ function loadExercise(){
   const key=select?.value;
   if(!loadExerciseByKey(key))return alert("Select an exercise first.");
 }
+function exerciseRequirements(key){
+ const text=()=>flattenText(state.model?.nodes||[]);
+ const allStepsHaveCmd=()=>state.model?.nodes.filter(n=>n.type==="step").every(n=>(n.children||[]).some(c=>c.type==="cmd"));
+ const maps={
+  rollback:guidedTask.requirements.map(r=>[r.label,r.test]),
+  schema:[
+   ["One title",()=>state.model?.nodes.filter(n=>n.type==="title").length===1],
+   ["At least one step",()=>state.model?.nodes.some(n=>n.type==="step")],
+   ["Every step has a cmd",allStepsHaveCmd]
+  ],
+  brex:[
+   ["One title",()=>state.model?.nodes.filter(n=>n.type==="title").length===1],
+   ["Every step has a cmd",allStepsHaveCmd],
+   ["State MAINTENANCE mode",()=>/MAINTENANCE mode/i.test(text())],
+   ["Applicability is stated",()=>!!String(state.model?.applicability?.expression||"").trim()]
+  ],
+  ste:[
+   ["No “prior to”",()=>!/\bprior to\b/i.test(text())],
+   ["No “should”",()=>!/\bshould\b/i.test(text())],
+   ["No “utilize”",()=>!/\butilize\b/i.test(text())],
+   ["No semicolon",()=>!/[;]/.test(text())]
+  ],
+  xref:[
+   ["Fault Isolation DM is referenced",()=>text().includes("23-31-01-310-801A-A")||state.model?.nodes.some(n=>(n.xrefs||[]).some(x=>x.dmc==="23-31-01-310-801A-A"))]
+  ],
+  mixed:[
+   ["Every step has a cmd",allStepsHaveCmd],
+   ["No “prior to”",()=>!/\bprior to\b/i.test(text())],
+   ["No “should”",()=>!/\bshould\b/i.test(text())],
+   ["No “utilize”",()=>!/\butilize\b/i.test(text())],
+   ["State MAINTENANCE mode",()=>/MAINTENANCE mode/i.test(text())]
+  ],
+  "ctx-procedure":[
+   ["At least one step",()=>state.model?.nodes.some(n=>n.type==="step")],
+   ["Every step has a cmd",allStepsHaveCmd],
+   ["Safety context is present",()=>state.model?.nodes.some(n=>n.type==="warning"||n.type==="note")]
+  ],
+  "ctx-fault":[
+   ["Contains troubleshooting action",()=>state.model?.nodes.some(n=>n.type==="step")],
+   ["Every step has a cmd",allStepsHaveCmd],
+   ["Has a managed or textual DM reference",()=>/\d{2}-\d{2}-\d{2}-\d{3}-\d{4}[A-Z]-[A-Z]/.test(text())||state.model?.nodes.some(n=>(n.xrefs||[]).length)]
+  ],
+  "ctx-safety":[
+   ["Contains warning or note",()=>state.model?.nodes.some(n=>n.type==="warning"||n.type==="note")],
+   ["Warning precedes the first step",()=>{const w=state.model?.nodes.findIndex(n=>n.type==="warning"),s=state.model?.nodes.findIndex(n=>n.type==="step");return w>=0&&(s<0||w<s)}]
+  ],
+  "ctx-system":[
+   ["Contains descriptive paragraph",()=>state.model?.nodes.some(n=>n.type==="para")],
+   ["Contains section heading",()=>state.model?.nodes.some(n=>n.type==="sectionTitle")]
+  ],
+  "ctx-operator":[
+   ["Contains operational step",()=>state.model?.nodes.some(n=>n.type==="step")],
+   ["Every step has a cmd",allStepsHaveCmd]
+  ],
+  "ctx-software":[
+   ["Contains structured table",()=>state.model?.nodes.some(n=>n.type==="table")],
+   ["Applicability is stated",()=>!!String(state.model?.applicability?.expression||"").trim()],
+   ["Has a managed or textual DM reference",()=>/\d{2}-\d{2}-\d{2}-\d{3}-\d{4}[A-Z]-[A-Z]/.test(text())||state.model?.nodes.some(n=>(n.xrefs||[]).length)]
+  ],
+  "ctx-reference":[
+   ["Contains structured table",()=>state.model?.nodes.some(n=>n.type==="table")],
+   ["Contains a reference",()=>/\d{2}-\d{2}-\d{2}-\d{3}-\d{4}[A-Z]-[A-Z]/.test(text())||state.model?.nodes.some(n=>(n.xrefs||[]).length)]
+  ]
+ };
+ return maps[key]||[];
+}
+
 function renderExerciseInfo(){
  const select=$("#exerciseSelect");if(!select)return;
  const catalog=contextExerciseCatalog(),prev=select.value;
  select.innerHTML=catalog.map(x=>`<option value="${x.id}">${esc(x.label)}</option>`).join("");
  if(catalog.some(x=>x.id===prev))select.value=prev;
  const ex=exercises[select.value],lp=activeLearningProfile();
- if(ex)$("#exerciseInfo").innerHTML=`<div class="learning-context-card"><strong>${esc(lp.label)}</strong>${esc(lp.challenge)}</div><h4>${esc(ex.title)}</h4><p>${esc(ex.description)}</p><p>Use normal editing, BREX, validation, references and Element Coach to solve it.</p>`;
+ if(!ex)return;
+ const goals=exerciseRequirements(select.value).map(([label])=>label);
+ $("#exerciseInfo").innerHTML=`<div class="learning-context-card"><strong>${esc(lp.label)}</strong>${esc(lp.focus)}</div>
+ <h4>${esc(ex.title)}</h4>
+ <p>${esc(ex.description)}</p>
+ <div class="s1000-goals"><strong>Goals</strong>${goals.map((g,i)=>`<div class="learning-goal"><span class="num">${i+1}.</span><span>${esc(g)}</span></div>`).join("")}</div>
+ <div class="learning-callout learning-hint"><strong>How it works</strong><br>Load the exercise, edit the DM with the normal authoring tools, then use Check progress.</div>`;
+ if($("#exerciseScore"))$("#exerciseScore").innerHTML="";
 }
+
+function scoreSelectedExercise(){
+ if(!state.model)return;
+ const key=state.trainingExercise?.id||$("#exerciseSelect")?.value;
+ const tests=exerciseRequirements(key);
+ if(!tests.length)return;
+ const results=tests.map(([label,test])=>{let pass=false;try{pass=!!test()}catch(e){}return{label,pass}});
+ const passed=results.filter(r=>r.pass).length;
+ const score=Math.round(passed/results.length*100);
+ if($("#exerciseScore"))$("#exerciseScore").innerHTML=`<div class="score-total">${score}%</div>${results.map(r=>`<div class="score-row ${r.pass?"pass":"fail"}"><strong>${r.pass?"✓":"✕"} ${esc(r.label)}</strong></div>`).join("")}`;
+}
+
 function renderGuidedTask(){
  const lp=activeLearningProfile(),type=inferLearningDmType(),card=$("#guidedTaskCard");if(!card)return;
  const goals=type==="procedure"?guidedTask.requirements.map(r=>r.label):lp.goals;
@@ -3397,7 +3484,6 @@ function updateLearningModeUi(){
    if($("#learningDmType"))$("#learningDmType").textContent=`DM type: ${lp.label} · ${lp.focus}`;
    if(typeof renderElementCoach==="function")renderElementCoach();
    if(typeof renderExerciseInfo==="function")renderExerciseInfo();
-   if(typeof renderGuidedTask==="function")renderGuidedTask();
    if(typeof arbortextBasicModules!=="undefined"&&typeof renderArbortextBasicDetail==="function")renderArbortextBasicDetail();
    if(typeof renderDrillSelectors==="function")renderDrillSelectors();
    if(typeof updateDrillStats==="function")updateDrillStats();
@@ -3429,8 +3515,7 @@ $("#startBasicExerciseBtn").onclick=startSelectedBasicExercise;
 
 $("#loadExerciseBtn").onclick=loadExercise;
 $("#exerciseSelect").onchange=renderExerciseInfo;
-$("#startGuidedTaskBtn").onclick=startGuidedTask;
-$("#scoreGuidedTaskBtn").onclick=scoreGuidedTask;
+$("#scoreExerciseBtn").onclick=scoreSelectedExercise;
 $("#validateBtn").onclick=validate;$("#validateSideBtn").onclick=validate;$("#tagModeSelect").value=state.tagMode||"partial";$("#quickTagsBtn").onclick=()=>toggleQuickTags($("#quickTagsBtn"));$("#modifyAttributesBtn").onclick=showModifyAttributes;
 $("#previewBtn").onclick=()=>setMode("preview");
 $("#elementSelect").onchange=()=>{};
