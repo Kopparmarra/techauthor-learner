@@ -295,6 +295,8 @@ function openMainMenu(menu){
     else if(menu==="edit")showModal("Edit",`<div class="export-grid">
       <button class="export-option" onclick="undoAction()"><strong>${k("Ctrl+Z","Undo")}</strong><span>Undo last edit</span></button>
       <button class="export-option" onclick="redoAction()"><strong>${k("Ctrl+Y","Redo")}</strong><span>Redo last edit</span></button>
+      <button class="export-option" onclick="copySelectedElement()"><strong>${k("Ctrl+C","Copy Element")}</strong><span>Copy the selected structured element and its children</span></button>
+      <button class="export-option" onclick="pasteCopiedElement()"><strong>${k("Ctrl+V","Paste Element")}</strong><span>Paste the copied element at a valid structural location</span></button>
       <button class="export-option" onclick="showModifyAttributes()"><strong>${k("Ctrl+D","Modify Attributes")}</strong><span>Attributes valid for the current element/document type</span></button>
       <button class="export-option" onclick="showChangeMarkup()"><strong>Change Markup</strong><span>Change the selected element while preserving content</span></button>
       <button class="export-option" onclick="deleteSelected()"><strong>Delete Element</strong><span>Trainer structural delete</span></button>
@@ -633,7 +635,7 @@ const treeData=[
 const cloneDemo=()=>JSON.parse(JSON.stringify(demoModel));
 
 const state={
-  model:cloneDemo(), selectedId:"n1", dirty:false, issues:[], leftMode:"document",trainingExercise:null,rootSelected:false,undoStack:[],redoStack:[],historyLimit:50,tagMode:"partial",quickTagsEnabled:true,quickTagsIndex:0,quickTagsPopup:null,drillSession:null,selectedBasic:"tags",lastLearningAction:null,contextRulesOn:true,focusCycleIndex:0,zoomLevel:0,drillChapterIndex:0,drillIndex:0,drillProgress:null,scenarioIndex:0,scenarioProgress:null,scenarioAttempts:0,scenarioHintIndex:0,scenarioBaseline:null,scenarioActive:false,
+  model:cloneDemo(), selectedId:"n1", dirty:false, issues:[], leftMode:"document",trainingExercise:null,rootSelected:false,undoStack:[],redoStack:[],historyLimit:50,tagMode:"partial",quickTagsEnabled:true,quickTagsIndex:0,quickTagsPopup:null,drillSession:null,selectedBasic:"tags",lastLearningAction:null,contextRulesOn:true,focusCycleIndex:0,zoomLevel:0,drillChapterIndex:0,drillIndex:0,drillProgress:null,scenarioIndex:0,scenarioProgress:null,scenarioAttempts:0,scenarioHintIndex:0,scenarioBaseline:null,scenarioActive:false,structClipboard:null,
   history:[
    {time:"16:03",user:"Technical Writer",text:"Demo document opened"},
    {time:"16:06",user:"Technical Writer",text:"Issue metadata reviewed"}
@@ -2084,6 +2086,77 @@ function parentTypeOf(id){
  const r=getNodeById(id); if(!r)return"mainProcedure"; return r.parent?.type||"mainProcedure";
 }
 
+function cloneStructuredNode(node){
+ const copy=JSON.parse(JSON.stringify(node));
+ const reid=n=>{
+   n.id=uid();
+   if(n.children)n.children.forEach(reid);
+ };
+ reid(copy);
+ return copy;
+}
+
+function hasSelectedTextInEditor(){
+ const sel=window.getSelection?.();
+ if(!sel||sel.rangeCount===0||sel.isCollapsed)return false;
+ const range=sel.getRangeAt(0);
+ const editor=$("#authorEditor");
+ return !!(editor&&editor.contains(range.commonAncestorContainer));
+}
+
+function copySelectedElement(){
+ if(!state.model||!state.selectedId)return false;
+ const r=getNodeById(state.selectedId);if(!r)return false;
+ state.structClipboard=JSON.parse(JSON.stringify(r.node));
+ state.lastLearningAction={kind:"copy-element",type:r.node.type};
+ if($("#cursorStatus"))$("#cursorStatus").textContent=`Copied <${r.node.type}> element`;
+ toast(`Copied <${r.node.type}>`);
+ return true;
+}
+
+function pasteCopiedElement(){
+ if(isLocked())return alert("Approved documents are locked.");
+ if(!state.model||!state.structClipboard)return false;
+ const target=getNodeById(state.selectedId);
+ if(!target)return false;
+
+ const type=state.structClipboard.type;
+ let destNodes=null,destIndex=null,context=null,placement="after";
+
+ // First preference: paste as a sibling after the selected element.
+ context=target.parent?.type||"mainProcedure";
+ if((schema[context]||[]).includes(type)){
+   destNodes=target.nodes;
+   destIndex=target.index+1;
+ }else if((schema[target.node.type]||[]).includes(type)){
+   // Fallback: paste inside the selected element when that is structurally valid.
+   target.node.children=target.node.children||[];
+   destNodes=target.node.children;
+   destIndex=destNodes.length;
+   context=target.node.type;
+   placement="inside";
+ }else{
+   return alert(`Cannot paste <${type}> in the current <${context}> context.`);
+ }
+
+ if(type==="title"&&context==="mainProcedure"&&(state.model.nodes||[]).some(n=>n.type==="title"))
+   return alert("A title already exists. This document allows exactly one top-level <title>.");
+
+ pushUndo(`Paste <${type}>`);
+ const copy=cloneStructuredNode(state.structClipboard);
+ destNodes.splice(destIndex,0,copy);
+ state.selectedId=copy.id;
+ state.rootSelected=false;
+ state.history.unshift(hist(`Pasted <${type}> ${placement} selected element`));
+ state.lastLearningAction={kind:"paste-element",type};
+ markDirty();
+ renderAuthor();renderTree();refreshInsertOptions();updateContext();syncSourcePassive();renderPreview();renderElementCoach();
+ revealSelectedInEditor();
+ if($("#cursorStatus"))$("#cursorStatus").textContent=`Pasted <${type}> ${placement}`;
+ toast(`Pasted <${type}>`);
+ return true;
+}
+
 
 
 function cycleTagMode(){const order=["full","partial","none"],i=order.indexOf(currentTagMode());applyTagMode(order[(i+1)%3]);noteShortcut("tagcycle")}
@@ -2429,6 +2502,46 @@ function renderTrainingBanner(){
  banner.innerHTML=`Training exercise loaded: ${esc(state.trainingExercise.title)} <span>Changes are local training data and are not checked in to the CSDB.</span>`;
  author.parentElement.insertBefore(banner,author);
 }
+
+function insertPlainTextAtCaret(target,text){
+ if(!target)return;
+ const clean=String(text??"")
+   .replace(/\r\n?/g,"\n")
+   .replace(/[ \t]*\n+[ \t]*/g," ")
+   .replace(/[ \t]{2,}/g," ");
+ const sel=window.getSelection?.();
+ if(sel&&sel.rangeCount){
+   const range=sel.getRangeAt(0);
+   if(target.contains(range.commonAncestorContainer)){
+     range.deleteContents();
+     const node=document.createTextNode(clean);
+     range.insertNode(node);
+     range.setStartAfter(node);
+     range.collapse(true);
+     sel.removeAllRanges();
+     sel.addRange(range);
+     return;
+   }
+ }
+ target.appendChild(document.createTextNode(clean));
+}
+
+function handleStructuredPaste(e,target,node){
+ if(isLocked())return;
+ const text=e.clipboardData?.getData("text/plain");
+ if(text==null)return; // Let the browser handle unusual clipboard payloads.
+ e.preventDefault();
+ if(target.dataset.undoCaptured!=="1"){
+   pushUndo(`Paste into <${node.type}>`);
+   target.dataset.undoCaptured="1";
+ }
+ insertPlainTextAtCaret(target,text);
+ node.text=target.innerText;
+ markDirty();
+ syncSourcePassive();
+ if($("#cursorStatus"))$("#cursorStatus").textContent=`Pasted text into <${node.type}>`;
+}
+
 function renderAuthor(){
  const editor=$("#authorEditor");editor.innerHTML="";
  let stepCounter=0;
@@ -2483,6 +2596,7 @@ function renderAuthor(){
       openQuickTags(content);
     }
   });
+  content.addEventListener("paste",e=>handleStructuredPaste(e,content,n));
   content.oninput=()=>{n.text=content.innerText;markDirty();syncSourcePassive()};
   }
   el.appendChild(content);
@@ -3677,6 +3791,31 @@ document.addEventListener("keydown",e=>{
  }
  if(e.key==="Escape"){closeQuickTags();closeInsertMarkupPopup();const mb=$("#modalBackdrop");if(mb&&!mb.classList.contains("hidden")){mb.classList.add("hidden");mb.dataset.menu="";}}
 });
+
+document.addEventListener("keydown",e=>{
+ const mod=e.metaKey||e.ctrlKey;
+ if(!mod)return;
+ const k=String(e.key||"").toLowerCase();
+ if(k!=="c"&&k!=="v")return;
+
+ const active=document.activeElement;
+ const typing=active&&(active.isContentEditable||/INPUT|TEXTAREA/.test(active.tagName));
+
+ if(k==="c"){
+   // Preserve normal text copy when the learner has highlighted text.
+   if(hasSelectedTextInEditor()||typing&&window.getSelection?.()?.toString())return;
+   if(copySelectedElement())e.preventDefault();
+   return;
+ }
+
+ if(k==="v"){
+   // Inside editable text, use the normal/plain-text paste handler.
+   if(active?.isContentEditable)return;
+   if(/INPUT|TEXTAREA/.test(active?.tagName||""))return;
+   if(state.structClipboard&&pasteCopiedElement())e.preventDefault();
+ }
+},true);
+
 document.addEventListener("keydown",e=>{
  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==="z"){
    e.preventDefault();

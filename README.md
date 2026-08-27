@@ -848,3 +848,18 @@ Scenario Practice deliberately does not tell the learner which buttons to press.
 - The capstone asks the learner to extract one review-ready maintenance-LAN software-update procedure DM from the larger legacy manual.
 - Added visible project brief, deliverable, source-manual link and expected effort while keeping acceptance criteria hidden.
 - The capstone reuses the normal authoring, applicability, xref, Validate, BREX, Completeness and workflow tools.
+
+## v7.34 — Copy/paste in structured text
+- Fixed paste into editable title, para, warning, note, step and cmd text.
+- Clipboard content is inserted as plain text at the caret instead of relying on browser rich-text paste behavior.
+- Line breaks from PDFs/web pages are normalized to spaces so pasted legacy-manual text stays inside the selected XML element.
+- Paste participates in the trainer undo stack and updates the XML/source model immediately.
+- Native text selection/copy remains available.
+
+## v7.35 — Structural Copy/Paste
+- Added copy/paste for selected XML-style elements such as `step`, including their child `cmd` elements.
+- `Ctrl/Cmd+C` copies the selected element when no text selection is active.
+- `Ctrl/Cmd+V` pastes the copied element after the current element when valid, or inside it when that is the valid structural context.
+- New copies receive fresh internal IDs.
+- Normal highlighted-text copy and text paste are preserved.
+- Added `Copy Element` and `Paste Element` to the Edit menu.
