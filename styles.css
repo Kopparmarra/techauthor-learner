@@ -1021,3 +1021,76 @@ button:disabled{opacity:.45;cursor:not-allowed}
 #structuredPracticeView #scoreExerciseBtn{
   margin-top:0;
 }
+
+
+/* v7.30 — Checks dropdown */
+.checks-dropdown{
+  position:relative;
+  height:27px;
+  flex:0 0 auto;
+}
+#checksBtn{
+  height:27px;
+  min-width:74px;
+}
+#checksBtn.active{
+  background:#5a6065;
+  border-color:#8a9197;
+}
+.checks-menu{
+  position:absolute;
+  top:30px;
+  left:0;
+  z-index:10040;
+  width:250px;
+  padding:4px;
+  background:#f2f2f2;
+  border:1px solid #6d7378;
+  box-shadow:0 5px 14px rgba(0,0,0,.32);
+}
+.check-menu-item{
+  display:block;
+  width:100%;
+  min-height:43px;
+  padding:6px 8px;
+  border:0;
+  background:#fff;
+  text-align:left;
+  color:#222;
+}
+.check-menu-item:hover{background:#fff3b8}
+.check-menu-item strong{
+  display:block;
+  font-size:11px;
+  line-height:1.25;
+}
+.check-menu-item span{
+  display:block;
+  margin-top:2px;
+  font-size:9px;
+  color:#686e73;
+}
+.check-menu-separator{
+  border-top:1px solid #aaa;
+  margin:4px 2px;
+}
+.check-menu-item.run-all{
+  background:#fff9dc;
+}
+.check-source{
+  display:inline-block;
+  margin-right:6px;
+  padding:1px 4px;
+  border:1px solid #bbb;
+  background:#eee;
+  border-radius:2px;
+  font-size:8px;
+  letter-spacing:.04em;
+  color:#555;
+  vertical-align:1px;
+}
+.arb-status.check-success-flash{
+  background:#dcebd7!important;
+  color:#285321!important;
+  border-color:#6c9a59!important;
+}

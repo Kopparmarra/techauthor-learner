@@ -85,7 +85,7 @@ const guidedTask={title:"Create a software rollback procedure",scenario:"Roll ba
  {label:"A warning",test:()=>state.model?.nodes.some(n=>n.type==="warning")},
  {label:"At least four steps",test:()=>state.model?.nodes.filter(n=>n.type==="step").length>=4},
  {label:"Every step has a cmd",test:()=>state.model?.nodes.filter(n=>n.type==="step").every(n=>(n.children||[]).some(c=>c.type==="cmd"))},
- {label:"At least one codeblock",test:()=>hasNodeType(state.model?.nodes||[],"codeblock")},
+ {label:"At least one codeblock",test:()=>state.model?.nodes.some(n=>n.type==="codeblock")},
  {label:"Reference Fault Isolation DM",test:()=>flattenText(state.model?.nodes||[]).includes("23-31-01-310-801A-A")},
  {label:"State MAINTENANCE mode",test:()=>/MAINTENANCE mode/i.test(flattenText(state.model?.nodes||[]))}
 ]};

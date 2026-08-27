@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>TechAuthor Learner v7.14</title>
-  <link rel="stylesheet" href="styles.css?v=7.29">
+  <link rel="stylesheet" href="styles.css?v=7.30">
 </head>
 <body>
 <div id="app">
@@ -13,7 +13,7 @@
       <div class="brand-mark">TA</div>
       <div>
         <div class="brand-title">TechAuthor Learner</div>
-        <div class="brand-subtitle">Arbortext-like structured authoring trainer · v7.32</div>
+        <div class="brand-subtitle">Arbortext-like structured authoring trainer · v7.30</div>
       </div>
     </div>
     <div class="project-strip">
@@ -51,8 +51,8 @@
     <button id="openBtn" title="Import">📂</button>
     <button id="exportBtn" title="Export">⇩</button>
     <span class="tool-sep"></span>
-    <button id="undoBtn" title="Undo (Ctrl/Cmd+Z)">↶</button>
-    <button id="redoBtn" title="Redo (Ctrl/Cmd+Y)">↷</button>
+    <button id="undoBtn" title="Undo (Ctrl+Z)">↶</button>
+    <button id="redoBtn" title="Redo (Ctrl+Y)">↷</button>
     <span class="tool-sep"></span>
     <select id="insertPositionSelect" title="Insertion position">
 <option value="inside">Inside</option>
@@ -64,15 +64,32 @@
     </select>
     <button id="insertElementBtn" type="button" class="accent-icon" title="Insert selected element">＋</button>
     <button id="insertXrefBtn" title="Insert managed cross-reference">Xref</button>
-    <button id="tableEditorBtn" title="Open table editor">Table</button><button id="modifyAttributesBtn" title="Modify Attributes (Ctrl/Cmd+D)">Modify Attributes</button>
+    <button id="tableEditorBtn" title="Open table editor">Table</button><button id="modifyAttributesBtn" title="Modify Attributes (Ctrl+D)">Modify Attributes</button>
     <span class="tool-sep"></span>
     <button id="moveUpBtn" title="Move selected element up">↑</button>
     <button id="moveDownBtn" title="Move selected element down">↓</button>
     <button id="deleteElementBtn" class="danger-tool" title="Delete selected element">Delete</button>
     <span class="tool-sep"></span>
-    <button id="validateBtn" title="Tools > Check Completeness">Check Completeness</button>
+    <div class="checks-dropdown" id="checksDropdown">
+      <button id="checksBtn" type="button" title="Document checks">Checks ▾</button>
+      <div id="checksMenu" class="checks-menu hidden">
+        <button type="button" class="check-menu-item" data-check-action="validate">
+          <strong>Validate</strong><span>Schema / XML structure</span>
+        </button>
+        <button type="button" class="check-menu-item" data-check-action="brex">
+          <strong>BREX Check</strong><span>Project business rules</span>
+        </button>
+        <button type="button" class="check-menu-item" data-check-action="completeness">
+          <strong>Check Completeness</strong><span>Required content and references</span>
+        </button>
+        <div class="check-menu-separator"></div>
+        <button type="button" class="check-menu-item run-all" data-check-action="all">
+          <strong>Run all checks</strong><span>Validate + BREX + completeness</span>
+        </button>
+      </div>
+    </div>
     <select id="tagModeSelect" title="Tag display (Ctrl+Shift+L cycles)"><option value="full">Full Tags</option><option value="partial" selected>Partial Tags</option><option value="none">No Tags</option></select><button id="quickTagsBtn" title="Quick Tags (Enter)">Quick Tags</button><button id="previewBtn">Preview</button>
-    <button id="findReplaceBtn" title="Find / Replace (Ctrl/Cmd+F)">Find / Replace</button>
+    <button id="findReplaceBtn" title="Find / Replace (Ctrl+F)">Find / Replace</button>
   </div>
 
   <main class="workspace">
@@ -218,7 +235,7 @@
             <label class="check"><input id="steToggle" type="checkbox" checked> STE-style checks</label>
             <label class="check"><input id="structureToggle" type="checkbox" checked> Structure checks</label>
             <label class="check"><input id="xrefToggle" type="checkbox" checked> Cross-reference checks</label>
-            <button id="validateSideBtn" class="btn accent full">Run validation</button>
+            <button id="validateSideBtn" class="btn accent full">Run all checks</button>
           </div>
         </section>
       </div>
@@ -404,8 +421,8 @@
 </div>
 
 <!-- Load order: pure data → drills curriculum → application runtime (no bundler). -->
-<script src="js/schema.js?v=7.29"></script>
-<script src="js/drills.js?v=7.29"></script>
-<script src="app.js?v=7.29"></script>
+<script src="js/schema.js?v=7.30"></script>
+<script src="js/drills.js?v=7.30"></script>
+<script src="app.js?v=7.30"></script>
 </body>
 </html>

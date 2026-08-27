@@ -62,6 +62,7 @@ function criticalClickAction(id,el){
     case "moveUpBtn": return moveSelected(-1);
     case "moveDownBtn": return moveSelected(1);
     case "deleteElementBtn": return deleteSelected();
+    case "checksBtn": return toggleChecksMenu();
     case "validateBtn":
     case "validateSideBtn": return checkCompleteness();
     case "quickTagsBtn": return toggleQuickTags($("#quickTagsBtn"));
@@ -189,7 +190,7 @@ document.addEventListener("click",e=>{
         "backToCsdbBtn","checkInBtn","learningModeBtn","saveBtn","resetDemoBtn","themeBtn",
         "insertFromCsdbBtn","openBtn","exportBtn","undoBtn","redoBtn","insertElementBtn",
         "insertXrefBtn","tableEditorBtn","modifyAttributesBtn","moveUpBtn","moveDownBtn",
-        "deleteElementBtn","validateBtn","validateSideBtn","quickTagsBtn","previewBtn",
+        "deleteElementBtn","checksBtn","validateSideBtn","quickTagsBtn","previewBtn",
         "findReplaceBtn","clearTreeSearch","expandTreeBtn","collapseTreeBtn","hideDocumentMapBtn",
         "emptyNewDocBtn","emptyImportBtn","submitReviewBtn","approveBtn","returnBtn",
         "applyElementPropsBtn","addCommentBtn","applyApplicabilityBtn","beginnerDrillsBtn",
@@ -617,7 +618,7 @@ const treeData=[
 const cloneDemo=()=>JSON.parse(JSON.stringify(demoModel));
 
 const state={
-  model:cloneDemo(), selectedId:"n1", dirty:false, issues:[], leftMode:"document",trainingExercise:null,rootSelected:false,undoStack:[],redoStack:[],historyLimit:50,tagMode:"partial",quickTagsEnabled:true,quickTagsIndex:0,quickTagsPopup:null,drillSession:null,selectedBasic:"tags",lastLearningAction:null,contextRulesOn:true,focusCycleIndex:0,zoomLevel:0,drillChapterIndex:0,drillIndex:0,drillProgress:null,scenarioIndex:0,scenarioProgress:null,scenarioAttempts:0,scenarioHintIndex:0,scenarioBaseline:null,elementClipboard:null,
+  model:cloneDemo(), selectedId:"n1", dirty:false, issues:[], leftMode:"document",trainingExercise:null,rootSelected:false,undoStack:[],redoStack:[],historyLimit:50,tagMode:"partial",quickTagsEnabled:true,quickTagsIndex:0,quickTagsPopup:null,drillSession:null,selectedBasic:"tags",lastLearningAction:null,contextRulesOn:true,focusCycleIndex:0,zoomLevel:0,drillChapterIndex:0,drillIndex:0,drillProgress:null,scenarioIndex:0,scenarioProgress:null,scenarioAttempts:0,scenarioHintIndex:0,scenarioBaseline:null,
   history:[
    {time:"16:03",user:"Technical Writer",text:"Demo document opened"},
    {time:"16:06",user:"Technical Writer",text:"Issue metadata reviewed"}
@@ -2064,72 +2065,6 @@ function getNodeById(id,nodes=null,parent=null){
  for(let i=0;i<nodes.length;i++){const n=nodes[i];if(n.id===id)return{node:n,parent,nodes,index:i};if(n.children){const r=getNodeById(id,n.children,n);if(r)return r}}
  return null;
 }
-
-function cloneElementForPaste(node){
- const copy=JSON.parse(JSON.stringify(node));
- const renewIds=n=>{
-   n.id=uid();
-   // XML ID attributes must be unique in a document. Arbortext-style copy/paste
-   // creates a new structural element, so do not carry a user-entered XML ID.
-   if(Object.prototype.hasOwnProperty.call(n,"xmlId")) n.xmlId="";
-   (n.children||[]).forEach(renewIds);
- };
- renewIds(copy);
- return copy;
-}
-function copySelectedElement(){
- if(isLocked())return false;
- if(state.rootSelected||!state.selectedId)return false;
- const r=getNodeById(state.selectedId);if(!r)return false;
- state.elementClipboard=JSON.parse(JSON.stringify(r.node));
- noteShortcut("copy-element",{type:r.node.type});
- const status=$("#cursorStatus");if(status)status.textContent=`Copied <${r.node.type}>`;
- toast(`Copied <${r.node.type}>`);
- return true;
-}
-function cutSelectedElement(){
- if(isLocked())return false;
- if(state.rootSelected||!state.selectedId)return false;
- const r=getNodeById(state.selectedId);if(!r)return false;
- state.elementClipboard=JSON.parse(JSON.stringify(r.node));
- pushUndo(`Cut <${r.node.type}>`);
- const removed=detachNode(state.selectedId);if(!removed)return false;
- state.selectedId=null;state.rootSelected=true;
- state.history.unshift(hist(`Cut <${removed.type}>`));
- noteShortcut("cut-element",{type:removed.type});
- markDirty();renderAuthor();renderTree();refreshInsertOptions();updateContext();syncSourcePassive();renderPreview();renderElementCoach();
- if(state.drillSession)updateDrillStats();
- const status=$("#cursorStatus");if(status)status.textContent=`Cut <${removed.type}>`;
- toast(`Cut <${removed.type}>`);
- return true;
-}
-function pasteCopiedElement(){
- if(isLocked()||!state.elementClipboard)return false;
- const s=currentSelectionContext();
- if(s.kind!=="node")return false;
- const parentContext=s.parent?.type||"mainProcedure";
- const type=state.elementClipboard.type;
- const schemaAllowed=[...(schema[parentContext]||[])];
- const allowed=applyDocumentOccurrenceConstraints(validChildrenForContext(parentContext),parentContext);
- if(!schemaAllowed.includes(type)||!allowed.includes(type)){
-   toast(`Cannot paste <${type}> here`);
-   return true;
- }
- pushUndo(`Paste <${type}>`);
- const copy=cloneElementForPaste(state.elementClipboard);
- s.nodes.splice(s.index+1,0,copy);
- state.selectedId=copy.id;state.rootSelected=false;
- state.history.unshift(hist(`Pasted <${type}> after selected element`));
- state.lastLearningAction={kind:"paste-element",type};
- markDirty();renderAuthor();renderTree();refreshInsertOptions();updateContext();syncSourcePassive();renderPreview();renderElementCoach();revealSelectedInEditor();
- if(state.drillSession)updateDrillStats();
- const status=$("#cursorStatus");if(status)status.textContent=`Pasted <${type}>`;
- toast(`Pasted <${type}>`);
- return true;
-}
-function isTextEditingTarget(el){
- return !!(el && (el.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(el.tagName)));
-}
 function parentTypeOf(id){
  const r=getNodeById(id); if(!r)return"mainProcedure"; return r.parent?.type||"mainProcedure";
 }
@@ -2229,7 +2164,7 @@ function showContextInfo(){const s=currentSelectionContext(),ic=insertionContext
  state.drillEvidence=state.drillEvidence||{};state.drillEvidence.showContextOpened=true}
 function showDocumentTypeViewer(){const current=currentSelectionContext();const rows=Object.entries(schema).map(([p,c])=>`<div class="${(current.kind==="root"?"mainProcedure":current.node.type)===p?"ctx":""}">&lt;${esc(p)}&gt; → ${c.length?c.map(x=>`&lt;${esc(x)}&gt;`).join(", "):"text / leaf"}</div>`).join("");showModal("Document Type Viewer",`<div class="dtd-viewer">${rows}</div><p class="menu-note">Training schema view. In Arbortext, Document Type Viewer exposes the document structure and helps insert markup at valid locations.</p>`);state.lastLearningAction={kind:"doctype-viewer"};
  state.drillEvidence=state.drillEvidence||{};state.drillEvidence.doctypeOpened=true}
-function showShortcutReference(){showModal("Keyboard Shortcuts",`<div class="dtd-viewer"><b>Editing</b><br>Ctrl/Cmd+C Copy selected element · Ctrl/Cmd+X Cut selected element · Ctrl/Cmd+V Paste after selected element · Ctrl/Cmd+Z Undo · Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y Redo · Ctrl/Cmd+S Save · Ctrl/Cmd+O Open · Ctrl/Cmd+F Find/Replace · Ctrl/Cmd+D Modify Attributes<br><br><b>Markup</b><br>Enter Quick Tags · Ctrl+M Insert Markup list · Ctrl+Shift+M Insert Markup dialog<br><br><b>Views</b><br>Ctrl+Shift+L cycle tag display · Alt+Ctrl+O Document Map · Alt+Ctrl+N Normal · Ctrl+L Refresh · F6 cycle focus<br><br><b>Table</b><br>Alt+Shift+T Insert Table</div><p class="menu-note">These are based on PTC Arbortext Editor default mappings. The trainer implements the subset that maps cleanly to this browser simulation.</p>`)}
+function showShortcutReference(){showModal("Keyboard Shortcuts",`<div class="dtd-viewer"><b>Editing</b><br>Ctrl+Z Undo · Ctrl+Y Redo · Ctrl+S Save · Ctrl+F Find/Replace · Ctrl+D Modify Attributes<br><br><b>Markup</b><br>Enter Quick Tags · Ctrl+M Insert Markup list · Ctrl+Shift+M Insert Markup dialog<br><br><b>Views</b><br>Ctrl+Shift+L cycle tag display · Alt+Ctrl+O Document Map · Alt+Ctrl+N Normal · Ctrl+L Refresh · F6 cycle focus<br><br><b>Table</b><br>Alt+Shift+T Insert Table</div><p class="menu-note">These are based on PTC Arbortext Editor default mappings. The trainer implements the subset that maps cleanly to this browser simulation.</p>`)}
 
 function findElementBoundary(which){
  const r=getNodeById(state.selectedId);
@@ -3066,87 +3001,149 @@ function renderCompletenessLog(issues){
  </div>`;
 }
 
-function validate(){
- state.lastLearningAction={kind:"validate"};
- if(!state.model){
-   state.issues=[{type:"info",label:"Document",msg:"No document is open."}];
-   renderValidation();showRightTab("validation");$("#issueBadge").textContent=1;return state.issues;
- }
- const issues=[],m=state.model.meta;
- const text=flattenText(state.model.nodes);
- const profile=activeBrexProfile();
+function tagCheckSource(issues,source){
+ return (issues||[]).map(i=>({...i,source:i.source||source}));
+}
 
- // Document-type completeness checks (schema/markup/attributes/IDs/tables).
- issues.push(...collectCompletenessStructureIssues());
+function collectSchemaValidationIssues(){
+ const structural=collectCompletenessStructureIssues();
+ // Validation is the XML/schema-facing pass: element placement, attributes,
+ // identifiers/references and table markup. Required-content/empty-content
+ // findings are deliberately left to Check Completeness.
+ return tagCheckSource(structural.filter(i=>{
+   const cat=completenessCategory(i);
+   return ["Markup","Attributes","IDs & references","Table markup"].includes(cat);
+ }),"SCHEMA");
+}
 
- if($("#structureToggle").checked){
-   profile.rules.forEach(rule=>{
-     if(rule.type==="required"&&rule.target==="document"){
-       const titles=state.model.nodes.filter(n=>n.type==="title");
-       if(titles.length!==1)issues.push({type:"err",label:`BREX ${rule.id}`,msg:rule.message});
-     }
-     if(rule.type==="required"&&rule.target==="procedure"){
-       if(!state.model.nodes.some(n=>n.type==="step"))
-         issues.push({type:profile===brexProfiles.saab_strict?"err":"warn",label:`BREX ${rule.id}`,msg:rule.message});
-     }
-     if(rule.type==="required"&&rule.target==="step"){
-       state.model.nodes.filter(n=>n.type==="step").forEach((n,i)=>{
-         if(!(n.children||[]).some(c=>c.type==="cmd"))
-           issues.push({type:"err",label:`BREX ${rule.id}`,msg:`Step ${i+1}: ${rule.message}`});
-       });
-     }
-     if(rule.type==="requiredText"){
-       if(!new RegExp(rule.pattern,"i").test(text))
-         issues.push({type:"warn",label:`BREX ${rule.id}`,msg:rule.message});
-     }
-     if(rule.type==="metadata"){
-       if(!String(m[rule.field]||"").trim())
-         issues.push({type:"err",label:`BREX ${rule.id}`,msg:rule.message});
-     }
-     if(rule.type==="allowedValue"){
-       if(!rule.values.includes(String(m[rule.field]||"")))
-         issues.push({type:"err",label:`BREX ${rule.id}`,msg:rule.message});
-     }
-     if(rule.type==="applicability"){
-       if(!String(state.model.applicability?.expression||"").trim())
-         issues.push({type:"err",label:`BREX ${rule.id}`,msg:rule.message});
-     }
-   });
+function collectCompletenessOnlyIssues(){
+ const structural=collectCompletenessStructureIssues();
+ const issues=tagCheckSource(structural.filter(i=>{
+   const cat=completenessCategory(i);
+   return ["Completeness","Empty elements"].includes(cat);
+ }),"COMPLETENESS");
+
+ if($("#xrefToggle")?.checked){
+   const text=flattenText(state.model?.nodes||[]);
+   const refs=[...text.matchAll(/\b\d{2}-\d{2}-\d{2}-\d{3}-\d{4}[A-Z]-[A-Z]\b/g)].map(m=>m[0]);
+   const managed=(state.model?.nodes||[]).some(n=>(n.xrefs||[]).length||(n.children||[]).some(c=>(c.xrefs||[]).length));
+   if(!refs.length&&!managed)issues.push({type:"info",label:"References",msg:"No DMC-like or managed cross-reference detected.",source:"COMPLETENESS"});
  }
 
- if($("#steToggle").checked){
-  const rules=[
-   [/\butilize\b/i,"Prefer “use” instead of “utilize”."],
-   [/\bprior to\b/i,"Prefer “before” instead of “prior to”."],
-   [/;/,"Avoid semicolons in procedural text."],
-   [/\bshould\b/i,"Avoid ambiguous modal “should” in mandatory procedures."],
-   [/\bmake sure\b/i,"Review “make sure”; a direct verification verb can be clearer."]
-  ];
-  rules.forEach(([re,msg])=>{if(re.test(text))issues.push({type:"warn",label:"STE",msg})});
- }
+ if(state.model?.meta?.workflow==="Approved"&&state.dirty)
+   issues.push({type:"err",label:"Workflow",msg:"Approved content must not contain unsaved modifications.",source:"COMPLETENESS"});
 
- if($("#xrefToggle").checked){
-  const refs=[...text.matchAll(/\b\d{2}-\d{2}-\d{2}-\d{3}-\d{4}[A-Z]-[A-Z]\b/g)].map(m=>m[0]);
-  if(!refs.length)issues.push({type:"info",label:"References",msg:"No DMC-like cross-reference detected in body text."});
- }
+ return issues;
+}
 
- if(m.workflow==="Approved"&&state.dirty)
-   issues.push({type:"err",label:"Workflow",msg:"Approved content must not contain unsaved modifications."});
+function collectBrexCheckIssues(){
+ if(!state.model)return [];
+ const issues=[],m=state.model.meta,text=flattenText(state.model.nodes),profile=activeBrexProfile();
+ profile.rules.forEach(rule=>{
+   if(rule.type==="required"&&rule.target==="document"){
+     const titles=state.model.nodes.filter(n=>n.type==="title");
+     if(titles.length!==1)issues.push({type:"err",label:`BREX ${rule.id}`,msg:rule.message,source:"BREX"});
+   }
+   if(rule.type==="required"&&rule.target==="procedure"){
+     if(!state.model.nodes.some(n=>n.type==="step"))
+       issues.push({type:profile===brexProfiles.saab_strict?"err":"warn",label:`BREX ${rule.id}`,msg:rule.message,source:"BREX"});
+   }
+   if(rule.type==="required"&&rule.target==="step"){
+     state.model.nodes.filter(n=>n.type==="step").forEach((n,i)=>{
+       if(!(n.children||[]).some(c=>c.type==="cmd"))
+         issues.push({type:"err",label:`BREX ${rule.id}`,msg:`Step ${i+1}: ${rule.message}`,source:"BREX"});
+     });
+   }
+   if(rule.type==="requiredText"&&!new RegExp(rule.pattern,"i").test(text))
+     issues.push({type:"warn",label:`BREX ${rule.id}`,msg:rule.message,source:"BREX"});
+   if(rule.type==="metadata"&&!String(m[rule.field]||"").trim())
+     issues.push({type:"err",label:`BREX ${rule.id}`,msg:rule.message,source:"BREX"});
+   if(rule.type==="allowedValue"&&!rule.values.includes(String(m[rule.field]||"")))
+     issues.push({type:"err",label:`BREX ${rule.id}`,msg:rule.message,source:"BREX"});
+   if(rule.type==="applicability"&&!String(state.model.applicability?.expression||"").trim())
+     issues.push({type:"err",label:`BREX ${rule.id}`,msg:rule.message,source:"BREX"});
+ });
+ return issues;
+}
 
+function collectLanguageIssues(){
+ if(!$("#steToggle")?.checked||!state.model)return [];
+ const text=flattenText(state.model.nodes||[]),issues=[];
+ const rules=[
+  [/\butilize\b/i,"Prefer “use” instead of “utilize”."],
+  [/\bprior to\b/i,"Prefer “before” instead of “prior to”."],
+  [/;/,"Avoid semicolons in procedural text."],
+  [/\bshould\b/i,"Avoid ambiguous modal “should” in mandatory procedures."],
+  [/\bmake sure\b/i,"Review “make sure”; a direct verification verb can be clearer."]
+ ];
+ rules.forEach(([re,msg])=>{if(re.test(text))issues.push({type:"warn",label:"STE",msg,source:"LANGUAGE"})});
+ return issues;
+}
+
+function showCheckResults(name,issues){
  state.issues=issues;
  renderValidation();
  renderBrexPanel();
  showRightTab("validation");
- $("#issueBadge").textContent=issues.length;
- $("#cursorStatus").textContent=`Completeness check: ${issues.length} issue(s)`;
+ if($("#issueBadge"))$("#issueBadge").textContent=issues.length;
+ if($("#cursorStatus"))$("#cursorStatus").textContent=`${name}: ${issues.length} issue(s)`;
  return issues;
 }
-function hasNodeType(nodes,type){return (nodes||[]).some(n=>n.type===type||hasNodeType(n.children||[],type))}
+
+function runValidateCheck(){
+ state.lastLearningAction={kind:"validate",check:"schema"};
+ if(!state.model)return showCheckResults("Validate",[{type:"info",label:"Document",msg:"No document is open.",source:"SCHEMA"}]);
+ return showCheckResults("Validate",collectSchemaValidationIssues());
+}
+
+function runBrexCheck(){
+ state.lastLearningAction={kind:"brex-check"};
+ if(!state.model)return showCheckResults("BREX Check",[{type:"info",label:"Document",msg:"No document is open.",source:"BREX"}]);
+ return showCheckResults("BREX Check",collectBrexCheckIssues());
+}
+
+function runCompletenessCheck(){
+ // Keep kind=validate for the existing Check Completeness learning drills.
+ state.lastLearningAction={kind:"validate",check:"completeness"};
+ if(!state.model)return showCheckResults("Check Completeness",[{type:"info",label:"Document",msg:"No document is open.",source:"COMPLETENESS"}]);
+ const issues=collectCompletenessOnlyIssues();
+ showCheckResults("Check Completeness",issues);
+ if(!issues.length){
+   const cmp=$("#completenessStatus");
+   if(cmp){
+     cmp.classList.add("check-success-flash");
+     setTimeout(()=>cmp.classList.remove("check-success-flash"),2000);
+   }
+   if($("#cursorStatus"))$("#cursorStatus").textContent="No completeness errors found";
+ }
+ return issues;
+}
+
+function runAllChecks(){
+ state.lastLearningAction={kind:"validate",check:"all"};
+ if(!state.model)return showCheckResults("Run all checks",[{type:"info",label:"Document",msg:"No document is open.",source:"ALL"}]);
+ const issues=[
+   ...collectSchemaValidationIssues(),
+   ...($("#structureToggle")?.checked?collectBrexCheckIssues():[]),
+   ...collectCompletenessOnlyIssues(),
+   ...collectLanguageIssues()
+ ];
+ return showCheckResults("All checks",issues);
+}
+
+// Backward-compatible entry point used by workflow, check-in and older drills.
+function validate(){
+ return runAllChecks();
+}
+
 function flattenText(nodes){return nodes.map(n=>[n.text||"",...(n.xrefs||[]).map(x=>x.dmc+" "+(x.title||"")),...(n.children?[flattenText(n.children)]:[])].join(" ")).join(" ")}
 function renderValidation(){
  const c={err:0,warn:0,info:0};state.issues.forEach(i=>c[i.type]++);
  $("#errCount").textContent=c.err;$("#warnCount").textContent=c.warn;$("#infoCount").textContent=c.info;
- $("#validationList").innerHTML=state.issues.length?state.issues.map(i=>`<div class="validation-item ${i.type}"><div class="kind">${i.label}</div><div>${i.msg}</div></div>`).join(""):`<div class="validation-item"><div class="kind">No issues</div><div>The current document passed the enabled checks.</div></div>`;
+ $("#validationList").innerHTML=state.issues.length?state.issues.map(i=>`<div class="validation-item ${i.type}">
+   <div class="kind"><span class="check-source">${esc(i.source||"CHECK")}</span>${esc(i.label)}</div>
+   <div>${esc(i.msg)}</div>
+ </div>`).join(""):`<div class="validation-item"><div class="kind">No issues</div><div>The current document passed the selected check.</div></div>`;
 }
 
 function setWorkflow(next){
@@ -3312,7 +3309,7 @@ function showHistory(){showModal("Document history",`<div class="history-list">$
 function showHelp(){showModal("TechAuthor Learner — Help",`
 <div class="learning-card">
   <h4>What this is</h4>
-  <p>A browser-based <strong>Arbortext-like structured authoring trainer</strong> (v7.32). Practice Document Map navigation, Quick Tags, context-sensitive insert, Modify Attributes, Check Completeness, and an S1000D-style workflow without a full CSDB.</p>
+  <p>A browser-based <strong>Arbortext-like structured authoring trainer</strong> (v7.13). Practice Document Map navigation, Quick Tags, context-sensitive insert, Modify Attributes, Check Completeness, and an S1000D-style workflow without a full CSDB.</p>
 </div>
 <div class="learning-card" style="margin-top:8px">
   <h4>Learning Mode</h4>
@@ -3326,7 +3323,7 @@ function showHelp(){showModal("TechAuthor Learner — Help",`
   <h4>What this is not</h4>
   <p>Not PTC Arbortext. Not a complete S1000D implementation, official BREX ruleset, or production CSDB. Approved documents are locked until returned to the author.</p>
 </div>
-<p class="small-muted" style="margin-top:10px">See README.md for the full version history (v2 → v7.32).</p>`)}
+<p class="small-muted" style="margin-top:10px">See README.md for the full version history (v2 → v7.13).</p>`)}
 
 
 
@@ -3583,7 +3580,7 @@ $("#startBasicExerciseBtn").onclick=startSelectedBasicExercise;
 $("#loadExerciseBtn").onclick=loadExercise;
 $("#exerciseSelect").onchange=renderExerciseInfo;
 $("#scoreExerciseBtn").onclick=scoreSelectedExercise;
-$("#validateBtn").onclick=validate;$("#validateSideBtn").onclick=validate;$("#tagModeSelect").value=state.tagMode||"partial";$("#quickTagsBtn").onclick=()=>toggleQuickTags($("#quickTagsBtn"));$("#modifyAttributesBtn").onclick=showModifyAttributes;
+$("#validateSideBtn").onclick=runAllChecks;$("#tagModeSelect").value=state.tagMode||"partial";$("#quickTagsBtn").onclick=()=>toggleQuickTags($("#quickTagsBtn"));$("#modifyAttributesBtn").onclick=showModifyAttributes;
 $("#previewBtn").onclick=()=>setMode("preview");
 $("#elementSelect").onchange=()=>{};
 if($("#insertPositionSelect"))$("#insertPositionSelect").onchange=()=>{refreshInsertOptions();updateContext();};
@@ -3608,6 +3605,30 @@ if(document.readyState==="loading"){
  updateResponsiveLearningLayout();
 }
 
+
+function closeChecksMenu(){
+ $("#checksMenu")?.classList.add("hidden");
+ $("#checksBtn")?.classList.remove("active");
+}
+function toggleChecksMenu(){
+ const menu=$("#checksMenu");if(!menu)return;
+ const opening=menu.classList.contains("hidden");
+ if(opening){menu.classList.remove("hidden");$("#checksBtn")?.classList.add("active")}
+ else closeChecksMenu();
+}
+document.addEventListener("click",e=>{
+ const action=e.target.closest?.("[data-check-action]")?.dataset.checkAction;
+ if(action){
+   e.preventDefault();e.stopPropagation();
+   closeChecksMenu();
+   if(action==="validate")return runValidateCheck();
+   if(action==="brex")return runBrexCheck();
+   if(action==="completeness")return runCompletenessCheck();
+   if(action==="all")return runAllChecks();
+ }
+ if(!e.target.closest?.("#checksDropdown"))closeChecksMenu();
+},true);
+
 function closeInsertMarkupPopup(){$("#insertMarkupPopup")?.remove()}
 document.addEventListener("mousedown",e=>{
  const p=$("#insertMarkupPopup");if(!p)return;
@@ -3617,13 +3638,6 @@ document.addEventListener("mousedown",e=>{
 
 document.addEventListener("keydown",e=>{
  const k=e.key.toLowerCase(),mod=e.ctrlKey||e.metaKey;
- const typing=isTextEditingTarget(document.activeElement);
- // Native text copy/paste stays untouched while editing text. When an element
- // itself is selected, Cmd/Ctrl+C and Cmd/Ctrl+V copy/paste the whole subtree.
- if(mod&&!e.shiftKey&&k==="c"&&!typing){if(copySelectedElement()){e.preventDefault();return}}
- if(mod&&!e.shiftKey&&k==="x"&&!typing){if(cutSelectedElement()){e.preventDefault();return}}
- if(mod&&!e.shiftKey&&k==="v"&&!typing){if(pasteCopiedElement()){e.preventDefault();return}}
- if(mod&&!e.shiftKey&&k==="o"){e.preventDefault();noteShortcut("open");return $("#fileInput")?.click()}
  if(mod&&e.shiftKey&&k==="l"){e.preventDefault();return cycleTagMode()}
  if(mod&&k==="s"){e.preventDefault();noteShortcut("save");return saveLocal()}
  if(mod&&k==="f"&&!e.shiftKey){e.preventDefault();noteShortcut("find");return showFindReplace("text")}
