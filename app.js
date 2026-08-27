@@ -88,11 +88,25 @@ function criticalClickAction(id,el){
     case "addCommentBtn": state.lastLearningAction={kind:"comment"};return addComment();
     case "applyApplicabilityBtn": {
       pushUndo("Edit applicability");
-      state.model.applicability={
-        product:$("#appProduct")?.value||"",variant:$("#appVariant")?.value||"",
-        swFrom:$("#appSwFrom")?.value||"",swTo:$("#appSwTo")?.value||"",
-        serial:$("#appSerial")?.value||"",expression:$("#appExpression")?.value||""
-      };
+      const product=$("#appProduct")?.value||"";
+      const variant=$("#appVariant")?.value||"";
+      const swFrom=$("#appSwFrom")?.value||"";
+      const swTo=$("#appSwTo")?.value||"";
+      const serial=$("#appSerial")?.value||"";
+      let expression=$("#appExpression")?.value||"";
+      if(state.scenarioActive&&["sc3","sc10"].includes(state.trainingExercise?.id)){
+        const parts=[];
+        if(product)parts.push(`product == "${product}"`);
+        if(variant&&variant!=="All"){
+          const variantCode=/^Variant\s+(.+)$/i.exec(variant)?.[1]||variant;
+          parts.push(`variant == "${variantCode}"`);
+        }
+        if(swFrom)parts.push(`software >= "${swFrom}"`);
+        if(swTo)parts.push(`software <= "${swTo}"`);
+        expression=parts.join(" AND ");
+        if($("#appExpression"))$("#appExpression").value=expression;
+      }
+      state.model.applicability={product,variant,swFrom,swTo,serial,expression};
       if(typeof renderApplicabilityPreview==="function")renderApplicabilityPreview();
       markDirty();return validate();
     }

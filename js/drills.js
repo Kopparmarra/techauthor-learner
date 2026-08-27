@@ -611,7 +611,7 @@ const scenarioPractice=[
    applicability:{product:"Surface Sensor Software",variant:"All",swFrom:"4.0",swTo:"4.9",serial:"All serials",expression:'product == "Surface Sensor Software"'}
   }),
   criteria:[
-   ["Variant is B",()=>String(state.model.applicability?.variant||"").trim().toUpperCase()==="B"],
+   ["Variant is B",()=>/^(?:VARIANT\s+)?B$/i.test(String(state.model.applicability?.variant||"").trim())],
    ["Software from is 4.5",()=>String(state.model.applicability?.swFrom||"").trim()==="4.5"],
    ["Software to is 4.9",()=>String(state.model.applicability?.swTo||"").trim()==="4.9"],
    ["Applicability expression identifies Variant B",()=>/variant\s*==?\s*["']?B/i.test(String(state.model.applicability?.expression||""))]
@@ -785,7 +785,7 @@ const scenarioPractice=[
   criteria:[
    ["Returned to authoring",()=>state.model.meta?.workflow==="In Work"],
    ["Verification states the expected result",()=>/Running|active|operational/i.test(flattenText(state.model.nodes||[]))],
-   ["Applicability restricted to Variant B",()=>String(state.model.applicability?.variant||"").trim().toUpperCase()==="B"&&/variant\s*==?\s*["']?B/i.test(String(state.model.applicability?.expression||""))],
+   ["Applicability restricted to Variant B",()=>/^(?:VARIANT\s+)?B$/i.test(String(state.model.applicability?.variant||"").trim())&&/variant\s*==?\s*["']?(?:VARIANT\s+)?B/i.test(String(state.model.applicability?.expression||""))],
    ["Obsolete restart note removed",()=>!/Obsolete:|restart the display computer/i.test(flattenText(state.model.nodes||[]))],
    ["All review comments resolved",()=>{const d=getActiveDocument();return !!d&&(d.comments||[]).length>=3&&(d.comments||[]).every(c=>c.resolved)}],
    ["DM checked in",()=>!!state.drillEvidence?.checkedIn]

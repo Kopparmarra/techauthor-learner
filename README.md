@@ -836,3 +836,8 @@ Scenario Practice deliberately does not tell the learner which buttons to press.
 - Returning to Learning shows `Scenario in progress` and `Check scenario` instead of incorrectly returning to `Load scenario`.
 - Added `Variant A` and `Variant B` to the Applicability Variant selector for the scenario exercises that require them.
 - Fixed Scenario Practice success feedback so it is not erased while updating the completed marker.
+
+## v7.32 — Applicability scenario logic fix
+- Fixed Scenario 3 and Scenario 10 criteria to accept the actual UI value `Variant B` instead of only the internal shorthand `B`.
+- In applicability-focused scenarios, Apply applicability now builds the expression from the selected product, variant and software range.
+- The learner no longer has to enter the same applicability twice in both the form fields and expression box.
