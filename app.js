@@ -94,7 +94,7 @@ function criticalClickAction(id,el){
       const swTo=$("#appSwTo")?.value||"";
       const serial=$("#appSerial")?.value||"";
       let expression=$("#appExpression")?.value||"";
-      if(state.scenarioActive&&["sc3","sc10"].includes(state.trainingExercise?.id)){
+      if(state.scenarioActive&&["sc3","sc10","sc11"].includes(state.trainingExercise?.id)){
         const parts=[];
         if(product)parts.push(`product == "${product}"`);
         if(variant&&variant!=="All"){

@@ -1094,3 +1094,45 @@ button:disabled{opacity:.45;cursor:not-allowed}
   color:#285321!important;
   border-color:#6c9a59!important;
 }
+
+
+/* v7.33 — Scenario Practice capstone */
+.capstone-source{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  justify-content:space-between;
+  margin:8px 0;
+  padding:8px;
+  border:1px solid #c5c9cc;
+  background:#f2f3f4;
+}
+.capstone-source>div{
+  min-width:0;
+}
+.capstone-source strong,
+.capstone-source span{
+  display:block;
+}
+.capstone-source span{
+  margin-top:2px;
+  font-size:9px;
+  color:#555d63;
+}
+.capstone-source-btn{
+  flex:0 0 auto;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.capstone-meta{
+  margin:6px 0 10px;
+  font-size:9px;
+  color:#555d63;
+}
+.capstone-deliverable{
+  border-left:3px solid #d2a800;
+  padding-left:8px;
+}
+.scenario-level{
+  white-space:nowrap;
+}

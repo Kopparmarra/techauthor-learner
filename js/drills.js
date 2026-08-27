@@ -791,6 +791,46 @@ const scenarioPractice=[
    ["DM checked in",()=>!!state.drillEvidence?.checkedIn]
   ],
   hints:["Start with the workflow state: content in review is not ready for normal authoring.","Use the review comments as requirements and resolve them after making the changes.","Check in is the final hand-back action; it is separate from Save and workflow state."]
+ },
+ {
+  id:"sc11",title:"Capstone — Legacy manual migration",
+  level:"Capstone",
+  capstone:true,
+  source:{label:"RPU-200 Maintenance Manual, Rev C",href:"assets/source-material/RPU-200_Maintenance_Manual_Rev_C_LEGACY.pdf"},
+  effort:"30–60 min",
+  brief:"The legacy manual mixes system description, software configuration, procedures, safety information and fault isolation. Your assignment is to extract only the information needed for one maintainable procedure DM.",
+  deliverable:"One review-ready procedure DM for updating RPU-200 software through the maintenance LAN. The DM is for Variant B equipment and an approved RPU-4.3.x package. Do not reproduce the USB update or rollback procedures.",
+  scenario:"The RPU-200 documentation project is being migrated from a legacy maintenance manual to structured data modules. You have been assigned the software-update procedure.",
+  task:"Use the legacy manual as source material and author a concise, review-ready S1000D-style procedure DM for updating RPU-200 software through the maintenance LAN. Decide what belongs in this DM, what should be omitted, and where a managed reference is better than duplicated troubleshooting content.",
+  setup:()=>({
+   profile:"saab_strict",
+   nodes:[
+    {type:"title",text:"Update RPU-200 software"},
+    {type:"para",text:"Use the legacy maintenance manual and project brief to author this procedure."},
+    {type:"sectionTitle",text:"Procedure"}
+   ],
+   meta:{title:"Update RPU-200 software",dmc:"TRAINING-CAPSTONE-01",security:"UNCLASSIFIED",issue:"001",workflow:"In Work"},
+   applicability:{product:"Radar Processing Unit",variant:"All",swFrom:"",swTo:"",serial:"All serials",expression:""}
+  }),
+  criteria:[
+   ["DM remains focused on maintenance-LAN software update",()=>!/Allow downgrade|rollback|Local Media|USB update|RECOVERY switch/i.test(flattenText(state.model.nodes||[]))],
+   ["Safety information prevents operational update and interruption",()=>{const t=flattenText(state.model.nodes||[]);return /operational mission|operational service/i.test(t)&&/disconnect|remove power|power.*install|installation.*power/i.test(t)}],
+   ["Procedure contains a substantial action sequence",()=>getNodesByType("step").length>=7],
+   ["Every procedural step contains a cmd",()=>getNodesByType("step").length>=7&&getNodesByType("step").every(n=>(n.children||[]).some(c=>c.type==="cmd"))],
+   ["Service connection J105 is identified",()=>/J105/i.test(flattenText(state.model.nodes||[]))],
+   ["Package validation is included",()=>/Package Status|VALID|applicable/i.test(flattenText(state.model.nodes||[]))],
+   ["Successful installation and installed RPS version are verified",()=>/INSTALLATION SUCCESSFUL|installation successful/i.test(flattenText(state.model.nodes||[]))&&/RPS Version|installed.*version|version.*installed/i.test(flattenText(state.model.nodes||[]))],
+   ["Applicability identifies Variant B",()=>/^(?:VARIANT\s+)?B$/i.test(String(state.model.applicability?.variant||"").trim())&&/variant\s*==?\s*["']?(?:VARIANT\s+)?B/i.test(String(state.model.applicability?.expression||""))],
+   ["Applicability covers the 4.3 software baseline",()=>/^4\.3/.test(String(state.model.applicability?.swFrom||"").trim())],
+   ["Fault-isolation information is referenced rather than duplicated",()=>flattenText(state.model.nodes||[]).includes("23-31-01-310-801A-A")||getNodesByType("note").some(n=>(n.xrefs||[]).some(x=>x.dmc==="23-31-01-310-801A-A"))],
+   ["No obvious legacy wording remains",()=>!/\bprior to\b|\bshould\b|\butilize\b/i.test(flattenText(state.model.nodes||[]))],
+   ["DM submitted for review",()=>state.model.meta?.workflow==="In Review"]
+  ],
+  hints:[
+   "Start with Chapter 5, but use Chapters 2, 4 and 7 when they contain information needed to make the procedure complete.",
+   "Do not convert the whole source chapter. A data module should contain the information needed for its purpose and reference related fault-isolation content instead of copying it.",
+   "Before review, use Validate, BREX Check and Check Completeness. The active Project BREX also expects project metadata and applicability."
+  ]
  }
 ];
 
@@ -870,12 +910,21 @@ function renderScenarioIntro(){
  const done=!!state.scenarioProgress?.[s.id];
  const active=scenarioIsActive();
  host.innerHTML=`
-   <div class="scenario-head"><span>Scenario ${(state.scenarioIndex||0)+1} / ${scenarioPractice.length}</span><span class="scenario-level">${esc(s.level)}</span></div>
+   <div class="scenario-head"><span>${s.capstone?"Capstone":`Scenario ${(state.scenarioIndex||0)+1} / ${scenarioPractice.length}`}</span><span class="scenario-level">${esc(s.level)}</span></div>
    <h4>${esc(s.title)}</h4>
+   ${s.source?`<div class="capstone-source">
+      <div><strong>Source material</strong><span>${esc(s.source.label)}</span></div>
+      <a class="btn capstone-source-btn" href="${esc(s.source.href)}" target="_blank" rel="noopener">Open source manual</a>
+   </div>`:""}
+   ${s.effort?`<div class="capstone-meta"><strong>Expected effort</strong> ${esc(s.effort)}</div>`:""}
+   ${s.brief?`<div class="scenario-section"><strong>Project brief</strong><p>${esc(s.brief)}</p></div>`:""}
+   ${s.deliverable?`<div class="scenario-section capstone-deliverable"><strong>Deliverable</strong><p>${esc(s.deliverable)}</p></div>`:""}
    <div class="scenario-section"><strong>Scenario</strong><p>${esc(s.scenario)}</p></div>
    <div class="scenario-section task"><strong>Your task</strong><p>${esc(s.task)}</p></div>
    ${active?'<div class="scenario-complete-badge scenario-in-progress">Scenario in progress</div>':done?'<div class="scenario-complete-badge">✓ Previously completed</div>':""}`;
 
+ const startBtn=$("#scenarioStartBtn");
+ if(startBtn)startBtn.textContent=s.capstone?"Load capstone":"Load scenario";
  if(active){
    $("#scenarioStartBtn")?.classList.add("hidden");
    $("#scenarioCheckBtn")?.classList.remove("hidden");
@@ -899,7 +948,7 @@ function startScenario(){
  $("#scenarioCheckBtn")?.classList.remove("hidden");
  $("#scenarioHintBtn")?.classList.add("hidden");
  $("#scenarioNextBtn")?.classList.add("hidden");
- if($("#scenarioFeedback"))$("#scenarioFeedback").innerHTML=`<div class="scenario-status">Scenario loaded. Work in the editor and use any tools you think are appropriate.</div>`;
+ if($("#scenarioFeedback"))$("#scenarioFeedback").innerHTML=`<div class="scenario-status">${s.capstone?"Capstone loaded. Keep the source manual open in another tab and build the DM in the editor.":"Scenario loaded. Work in the editor and use any tools you think are appropriate."}</div>`;
 }
 
 function evaluateScenario(){

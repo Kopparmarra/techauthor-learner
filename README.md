@@ -841,3 +841,10 @@ Scenario Practice deliberately does not tell the learner which buttons to press.
 - Fixed Scenario 3 and Scenario 10 criteria to accept the actual UI value `Variant B` instead of only the internal shorthand `B`.
 - In applicability-focused scenarios, Apply applicability now builds the expression from the selected product, variant and software range.
 - The learner no longer has to enter the same applicability twice in both the form fields and expression box.
+
+## v7.33 — Legacy-manual capstone
+- Added Scenario 11: `Capstone — Legacy manual migration`.
+- Bundled the synthetic 10-page `RPU-200 Maintenance Manual, Rev C` as source material.
+- The capstone asks the learner to extract one review-ready maintenance-LAN software-update procedure DM from the larger legacy manual.
+- Added visible project brief, deliverable, source-manual link and expected effort while keeping acceptance criteria hidden.
+- The capstone reuses the normal authoring, applicability, xref, Validate, BREX, Completeness and workflow tools.
