@@ -832,6 +832,11 @@ Scenario Practice deliberately does not tell the learner which buttons to press.
 - Pasted elements receive new internal node IDs; explicit XML IDs are cleared to avoid duplicate IDs.
 
 
+
+## v7.32 — Recursive codeblock exercise check
+- The software rollback exercise now detects a `codeblock` anywhere in the document tree, including inside a `step`.
+- This matches the trainer schema, where `codeblock` is valid both at procedure level and as a child of `step`.
+
 ## v7.31 — Mac Ctrl/Cmd aliases
 - Common editing shortcuts now accept either **Ctrl** or **Cmd** on macOS for the trainer actions: Copy, Cut, Paste, Undo, Redo, Save, Open, Find/Replace and Modify Attributes.
 - Structural Cut (`Ctrl/Cmd+X`) copies the selected element subtree to the trainer clipboard and removes it from the document.

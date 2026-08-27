@@ -3141,6 +3141,7 @@ function validate(){
  $("#cursorStatus").textContent=`Completeness check: ${issues.length} issue(s)`;
  return issues;
 }
+function hasNodeType(nodes,type){return (nodes||[]).some(n=>n.type===type||hasNodeType(n.children||[],type))}
 function flattenText(nodes){return nodes.map(n=>[n.text||"",...(n.xrefs||[]).map(x=>x.dmc+" "+(x.title||"")),...(n.children?[flattenText(n.children)]:[])].join(" ")).join(" ")}
 function renderValidation(){
  const c={err:0,warn:0,info:0};state.issues.forEach(i=>c[i.type]++);
@@ -3311,7 +3312,7 @@ function showHistory(){showModal("Document history",`<div class="history-list">$
 function showHelp(){showModal("TechAuthor Learner — Help",`
 <div class="learning-card">
   <h4>What this is</h4>
-  <p>A browser-based <strong>Arbortext-like structured authoring trainer</strong> (v7.31). Practice Document Map navigation, Quick Tags, context-sensitive insert, Modify Attributes, Check Completeness, and an S1000D-style workflow without a full CSDB.</p>
+  <p>A browser-based <strong>Arbortext-like structured authoring trainer</strong> (v7.32). Practice Document Map navigation, Quick Tags, context-sensitive insert, Modify Attributes, Check Completeness, and an S1000D-style workflow without a full CSDB.</p>
 </div>
 <div class="learning-card" style="margin-top:8px">
   <h4>Learning Mode</h4>
@@ -3325,7 +3326,7 @@ function showHelp(){showModal("TechAuthor Learner — Help",`
   <h4>What this is not</h4>
   <p>Not PTC Arbortext. Not a complete S1000D implementation, official BREX ruleset, or production CSDB. Approved documents are locked until returned to the author.</p>
 </div>
-<p class="small-muted" style="margin-top:10px">See README.md for the full version history (v2 → v7.31).</p>`)}
+<p class="small-muted" style="margin-top:10px">See README.md for the full version history (v2 → v7.32).</p>`)}
 
 
 
