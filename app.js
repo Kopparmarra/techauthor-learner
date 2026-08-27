@@ -122,6 +122,7 @@ function criticalChangeAction(id,el){
     case "scenarioSelect":
       state.scenarioIndex=Number(el.value)||0;
       state.scenarioAttempts=0;state.scenarioHintIndex=0;
+      state.scenarioActive=false;
       return renderScenarioIntro();
     case "drillChapterSelect": state.drillChapterIndex=Number(el.value)||0;state.drillIndex=0;state.drillSession=null;return renderBeginnerStartState();
     case "drillJumpSelect": state.drillIndex=Number(el.value)||0;state.drillSession={correct:0,attempted:0,streak:0};loadCurrentDrill();return renderDrillSelectors();
@@ -618,7 +619,7 @@ const treeData=[
 const cloneDemo=()=>JSON.parse(JSON.stringify(demoModel));
 
 const state={
-  model:cloneDemo(), selectedId:"n1", dirty:false, issues:[], leftMode:"document",trainingExercise:null,rootSelected:false,undoStack:[],redoStack:[],historyLimit:50,tagMode:"partial",quickTagsEnabled:true,quickTagsIndex:0,quickTagsPopup:null,drillSession:null,selectedBasic:"tags",lastLearningAction:null,contextRulesOn:true,focusCycleIndex:0,zoomLevel:0,drillChapterIndex:0,drillIndex:0,drillProgress:null,scenarioIndex:0,scenarioProgress:null,scenarioAttempts:0,scenarioHintIndex:0,scenarioBaseline:null,
+  model:cloneDemo(), selectedId:"n1", dirty:false, issues:[], leftMode:"document",trainingExercise:null,rootSelected:false,undoStack:[],redoStack:[],historyLimit:50,tagMode:"partial",quickTagsEnabled:true,quickTagsIndex:0,quickTagsPopup:null,drillSession:null,selectedBasic:"tags",lastLearningAction:null,contextRulesOn:true,focusCycleIndex:0,zoomLevel:0,drillChapterIndex:0,drillIndex:0,drillProgress:null,scenarioIndex:0,scenarioProgress:null,scenarioAttempts:0,scenarioHintIndex:0,scenarioBaseline:null,scenarioActive:false,
   history:[
    {time:"16:03",user:"Technical Writer",text:"Demo document opened"},
    {time:"16:06",user:"Technical Writer",text:"Issue metadata reviewed"}

@@ -830,3 +830,9 @@ Scenario Practice deliberately does not tell the learner which buttons to press.
 - Results share the Issues/Validation view and are tagged `SCHEMA`, `BREX`, `COMPLETENESS`, or `LANGUAGE`.
 - The Properties-side validation button is now `Run all checks`.
 - Existing Check Completeness drills remain compatible.
+
+## v7.31 — Scenario navigation and applicability fix
+- An active Scenario Practice task now remains active when the learner opens Applicability, References, BREX Rules, or Properties and then returns to Learning.
+- Returning to Learning shows `Scenario in progress` and `Check scenario` instead of incorrectly returning to `Load scenario`.
+- Added `Variant A` and `Variant B` to the Applicability Variant selector for the scenario exercises that require them.
+- Fixed Scenario Practice success feedback so it is not erased while updating the completed marker.

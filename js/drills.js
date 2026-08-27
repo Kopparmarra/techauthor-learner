@@ -811,6 +811,7 @@ function hydrateScenarioNode(n){
 function applyScenarioSetup(scenario){
  const spec=scenario.setup();
  state.trainingExercise={id:scenario.id,title:`Scenario — ${scenario.title}`};
+ state.scenarioActive=true;
  state.scenarioAttempts=0;
  state.scenarioHintIndex=0;
  state.scenarioBaseline=spec.baseline||{};
@@ -851,6 +852,11 @@ function applyScenarioSetup(scenario){
  if($("#docTabTitle"))$("#docTabTitle").textContent=`${state.model.meta.dmc} — ${state.model.meta.title}`;
 }
 
+function scenarioIsActive(){
+ const s=currentScenario();
+ return !!(s&&state.scenarioActive&&state.trainingExercise?.id===s.id);
+}
+
 function renderScenarioSelector(){
  const sel=$("#scenarioSelect");if(!sel)return;
  state.scenarioProgress=state.scenarioProgress||loadScenarioProgress();
@@ -862,17 +868,28 @@ function renderScenarioSelector(){
 function renderScenarioIntro(){
  const s=currentScenario(),host=$("#scenarioCard");if(!s||!host)return;
  const done=!!state.scenarioProgress?.[s.id];
+ const active=scenarioIsActive();
  host.innerHTML=`
    <div class="scenario-head"><span>Scenario ${(state.scenarioIndex||0)+1} / ${scenarioPractice.length}</span><span class="scenario-level">${esc(s.level)}</span></div>
    <h4>${esc(s.title)}</h4>
    <div class="scenario-section"><strong>Scenario</strong><p>${esc(s.scenario)}</p></div>
    <div class="scenario-section task"><strong>Your task</strong><p>${esc(s.task)}</p></div>
-   ${done?'<div class="scenario-complete-badge">✓ Previously completed</div>':""}`;
- $("#scenarioStartBtn")?.classList.remove("hidden");
- $("#scenarioCheckBtn")?.classList.add("hidden");
- $("#scenarioHintBtn")?.classList.add("hidden");
- $("#scenarioNextBtn")?.classList.add("hidden");
- if($("#scenarioFeedback"))$("#scenarioFeedback").innerHTML="";
+   ${active?'<div class="scenario-complete-badge scenario-in-progress">Scenario in progress</div>':done?'<div class="scenario-complete-badge">✓ Previously completed</div>':""}`;
+
+ if(active){
+   $("#scenarioStartBtn")?.classList.add("hidden");
+   $("#scenarioCheckBtn")?.classList.remove("hidden");
+   $("#scenarioHintBtn")?.classList.toggle("hidden",(state.scenarioAttempts||0)<2||!s.hints?.length);
+   $("#scenarioNextBtn")?.classList.add("hidden");
+   if($("#scenarioFeedback")&&!$("#scenarioFeedback").innerHTML.trim())
+     $("#scenarioFeedback").innerHTML=`<div class="scenario-status">Scenario is still active. Continue working in the editor, then check the result.</div>`;
+ }else{
+   $("#scenarioStartBtn")?.classList.remove("hidden");
+   $("#scenarioCheckBtn")?.classList.add("hidden");
+   $("#scenarioHintBtn")?.classList.add("hidden");
+   $("#scenarioNextBtn")?.classList.add("hidden");
+   if($("#scenarioFeedback"))$("#scenarioFeedback").innerHTML="";
+ }
 }
 
 function startScenario(){
@@ -901,13 +918,19 @@ function checkScenario(){
  if(!failed.length){
    state.scenarioProgress=state.scenarioProgress||loadScenarioProgress();
    state.scenarioProgress[s.id]=true;saveScenarioProgress();
+   state.scenarioActive=false;
+   const sel=$("#scenarioSelect");
+   if(sel){
+     [...sel.options].forEach((o,i)=>{
+       const item=scenarioPractice[i];
+       o.textContent=`${state.scenarioProgress[item.id]?"✓ ":""}${i+1}. ${item.title}`;
+     });
+     sel.value=String(state.scenarioIndex||0);
+   }
    if(fb)fb.innerHTML=`<div class="scenario-result pass"><strong>✓ Scenario complete</strong><div>All ${results.length} acceptance criteria are satisfied.</div><div class="scenario-criteria">${results.map(r=>`<div>✓ ${esc(r.label)}</div>`).join("")}</div></div>`;
-   $("#scenarioCheckBtn")?.classList.add("hidden");
-   $("#scenarioHintBtn")?.classList.add("hidden");
-   $("#scenarioNextBtn")?.classList.toggle("hidden",(state.scenarioIndex||0)>=scenarioPractice.length-1);
-   renderScenarioSelector();
    $("#scenarioStartBtn")?.classList.add("hidden");
    $("#scenarioCheckBtn")?.classList.add("hidden");
+   $("#scenarioHintBtn")?.classList.add("hidden");
    $("#scenarioNextBtn")?.classList.toggle("hidden",(state.scenarioIndex||0)>=scenarioPractice.length-1);
    return;
  }
@@ -927,6 +950,7 @@ function nextScenario(){
  if((state.scenarioIndex||0)>=scenarioPractice.length-1)return;
  state.scenarioIndex++;
  state.scenarioAttempts=0;state.scenarioHintIndex=0;
+ state.scenarioActive=false;
  renderScenarioSelector();
 }
 
