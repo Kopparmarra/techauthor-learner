@@ -822,3 +822,19 @@ Scenario Practice deliberately does not tell the learner which buttons to press.
 - S1000D Practice now has one clear flow: choose exercise → read visible goals → Load exercise → edit → Check progress.
 - The former software rollback guided task is now a normal selectable exercise.
 - Progress checking is now exercise-specific instead of applying rollback criteria to unrelated procedure exercises.
+
+
+## v7.30 — Element copy/paste
+- Added Arbortext-style structural copy/paste for selected elements.
+- Cmd/Ctrl+C copies the selected element including child elements.
+- Cmd/Ctrl+V pastes the copied subtree after the selected element when the schema/BREX context permits it.
+- Normal text copy/paste remains native while editing text fields or element content.
+- Pasted elements receive new internal node IDs; explicit XML IDs are cleared to avoid duplicate IDs.
+
+
+## v7.31 — Mac Ctrl/Cmd aliases
+- Common editing shortcuts now accept either **Ctrl** or **Cmd** on macOS for the trainer actions: Copy, Cut, Paste, Undo, Redo, Save, Open, Find/Replace and Modify Attributes.
+- Structural Cut (`Ctrl/Cmd+X`) copies the selected element subtree to the trainer clipboard and removes it from the document.
+- `Ctrl/Cmd+Shift+Z` and `Ctrl/Cmd+Y` both redo.
+- Arbortext-specific `Ctrl+M` and `Ctrl+Shift+M` intentionally remain **Ctrl-only** because `Cmd+M` is the macOS Minimize shortcut.
+- Native text editing keeps the browser/OS behavior; the Ctrl/Cmd aliases above apply to trainer commands and selected structural elements.

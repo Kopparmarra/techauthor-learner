@@ -617,7 +617,7 @@ const treeData=[
 const cloneDemo=()=>JSON.parse(JSON.stringify(demoModel));
 
 const state={
-  model:cloneDemo(), selectedId:"n1", dirty:false, issues:[], leftMode:"document",trainingExercise:null,rootSelected:false,undoStack:[],redoStack:[],historyLimit:50,tagMode:"partial",quickTagsEnabled:true,quickTagsIndex:0,quickTagsPopup:null,drillSession:null,selectedBasic:"tags",lastLearningAction:null,contextRulesOn:true,focusCycleIndex:0,zoomLevel:0,drillChapterIndex:0,drillIndex:0,drillProgress:null,scenarioIndex:0,scenarioProgress:null,scenarioAttempts:0,scenarioHintIndex:0,scenarioBaseline:null,
+  model:cloneDemo(), selectedId:"n1", dirty:false, issues:[], leftMode:"document",trainingExercise:null,rootSelected:false,undoStack:[],redoStack:[],historyLimit:50,tagMode:"partial",quickTagsEnabled:true,quickTagsIndex:0,quickTagsPopup:null,drillSession:null,selectedBasic:"tags",lastLearningAction:null,contextRulesOn:true,focusCycleIndex:0,zoomLevel:0,drillChapterIndex:0,drillIndex:0,drillProgress:null,scenarioIndex:0,scenarioProgress:null,scenarioAttempts:0,scenarioHintIndex:0,scenarioBaseline:null,elementClipboard:null,
   history:[
    {time:"16:03",user:"Technical Writer",text:"Demo document opened"},
    {time:"16:06",user:"Technical Writer",text:"Issue metadata reviewed"}
@@ -2064,6 +2064,72 @@ function getNodeById(id,nodes=null,parent=null){
  for(let i=0;i<nodes.length;i++){const n=nodes[i];if(n.id===id)return{node:n,parent,nodes,index:i};if(n.children){const r=getNodeById(id,n.children,n);if(r)return r}}
  return null;
 }
+
+function cloneElementForPaste(node){
+ const copy=JSON.parse(JSON.stringify(node));
+ const renewIds=n=>{
+   n.id=uid();
+   // XML ID attributes must be unique in a document. Arbortext-style copy/paste
+   // creates a new structural element, so do not carry a user-entered XML ID.
+   if(Object.prototype.hasOwnProperty.call(n,"xmlId")) n.xmlId="";
+   (n.children||[]).forEach(renewIds);
+ };
+ renewIds(copy);
+ return copy;
+}
+function copySelectedElement(){
+ if(isLocked())return false;
+ if(state.rootSelected||!state.selectedId)return false;
+ const r=getNodeById(state.selectedId);if(!r)return false;
+ state.elementClipboard=JSON.parse(JSON.stringify(r.node));
+ noteShortcut("copy-element",{type:r.node.type});
+ const status=$("#cursorStatus");if(status)status.textContent=`Copied <${r.node.type}>`;
+ toast(`Copied <${r.node.type}>`);
+ return true;
+}
+function cutSelectedElement(){
+ if(isLocked())return false;
+ if(state.rootSelected||!state.selectedId)return false;
+ const r=getNodeById(state.selectedId);if(!r)return false;
+ state.elementClipboard=JSON.parse(JSON.stringify(r.node));
+ pushUndo(`Cut <${r.node.type}>`);
+ const removed=detachNode(state.selectedId);if(!removed)return false;
+ state.selectedId=null;state.rootSelected=true;
+ state.history.unshift(hist(`Cut <${removed.type}>`));
+ noteShortcut("cut-element",{type:removed.type});
+ markDirty();renderAuthor();renderTree();refreshInsertOptions();updateContext();syncSourcePassive();renderPreview();renderElementCoach();
+ if(state.drillSession)updateDrillStats();
+ const status=$("#cursorStatus");if(status)status.textContent=`Cut <${removed.type}>`;
+ toast(`Cut <${removed.type}>`);
+ return true;
+}
+function pasteCopiedElement(){
+ if(isLocked()||!state.elementClipboard)return false;
+ const s=currentSelectionContext();
+ if(s.kind!=="node")return false;
+ const parentContext=s.parent?.type||"mainProcedure";
+ const type=state.elementClipboard.type;
+ const schemaAllowed=[...(schema[parentContext]||[])];
+ const allowed=applyDocumentOccurrenceConstraints(validChildrenForContext(parentContext),parentContext);
+ if(!schemaAllowed.includes(type)||!allowed.includes(type)){
+   toast(`Cannot paste <${type}> here`);
+   return true;
+ }
+ pushUndo(`Paste <${type}>`);
+ const copy=cloneElementForPaste(state.elementClipboard);
+ s.nodes.splice(s.index+1,0,copy);
+ state.selectedId=copy.id;state.rootSelected=false;
+ state.history.unshift(hist(`Pasted <${type}> after selected element`));
+ state.lastLearningAction={kind:"paste-element",type};
+ markDirty();renderAuthor();renderTree();refreshInsertOptions();updateContext();syncSourcePassive();renderPreview();renderElementCoach();revealSelectedInEditor();
+ if(state.drillSession)updateDrillStats();
+ const status=$("#cursorStatus");if(status)status.textContent=`Pasted <${type}>`;
+ toast(`Pasted <${type}>`);
+ return true;
+}
+function isTextEditingTarget(el){
+ return !!(el && (el.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(el.tagName)));
+}
 function parentTypeOf(id){
  const r=getNodeById(id); if(!r)return"mainProcedure"; return r.parent?.type||"mainProcedure";
 }
@@ -2163,7 +2229,7 @@ function showContextInfo(){const s=currentSelectionContext(),ic=insertionContext
  state.drillEvidence=state.drillEvidence||{};state.drillEvidence.showContextOpened=true}
 function showDocumentTypeViewer(){const current=currentSelectionContext();const rows=Object.entries(schema).map(([p,c])=>`<div class="${(current.kind==="root"?"mainProcedure":current.node.type)===p?"ctx":""}">&lt;${esc(p)}&gt; → ${c.length?c.map(x=>`&lt;${esc(x)}&gt;`).join(", "):"text / leaf"}</div>`).join("");showModal("Document Type Viewer",`<div class="dtd-viewer">${rows}</div><p class="menu-note">Training schema view. In Arbortext, Document Type Viewer exposes the document structure and helps insert markup at valid locations.</p>`);state.lastLearningAction={kind:"doctype-viewer"};
  state.drillEvidence=state.drillEvidence||{};state.drillEvidence.doctypeOpened=true}
-function showShortcutReference(){showModal("Keyboard Shortcuts",`<div class="dtd-viewer"><b>Editing</b><br>Ctrl+Z Undo · Ctrl+Y Redo · Ctrl+S Save · Ctrl+F Find/Replace · Ctrl+D Modify Attributes<br><br><b>Markup</b><br>Enter Quick Tags · Ctrl+M Insert Markup list · Ctrl+Shift+M Insert Markup dialog<br><br><b>Views</b><br>Ctrl+Shift+L cycle tag display · Alt+Ctrl+O Document Map · Alt+Ctrl+N Normal · Ctrl+L Refresh · F6 cycle focus<br><br><b>Table</b><br>Alt+Shift+T Insert Table</div><p class="menu-note">These are based on PTC Arbortext Editor default mappings. The trainer implements the subset that maps cleanly to this browser simulation.</p>`)}
+function showShortcutReference(){showModal("Keyboard Shortcuts",`<div class="dtd-viewer"><b>Editing</b><br>Ctrl/Cmd+C Copy selected element · Ctrl/Cmd+X Cut selected element · Ctrl/Cmd+V Paste after selected element · Ctrl/Cmd+Z Undo · Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y Redo · Ctrl/Cmd+S Save · Ctrl/Cmd+O Open · Ctrl/Cmd+F Find/Replace · Ctrl/Cmd+D Modify Attributes<br><br><b>Markup</b><br>Enter Quick Tags · Ctrl+M Insert Markup list · Ctrl+Shift+M Insert Markup dialog<br><br><b>Views</b><br>Ctrl+Shift+L cycle tag display · Alt+Ctrl+O Document Map · Alt+Ctrl+N Normal · Ctrl+L Refresh · F6 cycle focus<br><br><b>Table</b><br>Alt+Shift+T Insert Table</div><p class="menu-note">These are based on PTC Arbortext Editor default mappings. The trainer implements the subset that maps cleanly to this browser simulation.</p>`)}
 
 function findElementBoundary(which){
  const r=getNodeById(state.selectedId);
@@ -3245,7 +3311,7 @@ function showHistory(){showModal("Document history",`<div class="history-list">$
 function showHelp(){showModal("TechAuthor Learner — Help",`
 <div class="learning-card">
   <h4>What this is</h4>
-  <p>A browser-based <strong>Arbortext-like structured authoring trainer</strong> (v7.13). Practice Document Map navigation, Quick Tags, context-sensitive insert, Modify Attributes, Check Completeness, and an S1000D-style workflow without a full CSDB.</p>
+  <p>A browser-based <strong>Arbortext-like structured authoring trainer</strong> (v7.31). Practice Document Map navigation, Quick Tags, context-sensitive insert, Modify Attributes, Check Completeness, and an S1000D-style workflow without a full CSDB.</p>
 </div>
 <div class="learning-card" style="margin-top:8px">
   <h4>Learning Mode</h4>
@@ -3259,7 +3325,7 @@ function showHelp(){showModal("TechAuthor Learner — Help",`
   <h4>What this is not</h4>
   <p>Not PTC Arbortext. Not a complete S1000D implementation, official BREX ruleset, or production CSDB. Approved documents are locked until returned to the author.</p>
 </div>
-<p class="small-muted" style="margin-top:10px">See README.md for the full version history (v2 → v7.13).</p>`)}
+<p class="small-muted" style="margin-top:10px">See README.md for the full version history (v2 → v7.31).</p>`)}
 
 
 
@@ -3550,6 +3616,13 @@ document.addEventListener("mousedown",e=>{
 
 document.addEventListener("keydown",e=>{
  const k=e.key.toLowerCase(),mod=e.ctrlKey||e.metaKey;
+ const typing=isTextEditingTarget(document.activeElement);
+ // Native text copy/paste stays untouched while editing text. When an element
+ // itself is selected, Cmd/Ctrl+C and Cmd/Ctrl+V copy/paste the whole subtree.
+ if(mod&&!e.shiftKey&&k==="c"&&!typing){if(copySelectedElement()){e.preventDefault();return}}
+ if(mod&&!e.shiftKey&&k==="x"&&!typing){if(cutSelectedElement()){e.preventDefault();return}}
+ if(mod&&!e.shiftKey&&k==="v"&&!typing){if(pasteCopiedElement()){e.preventDefault();return}}
+ if(mod&&!e.shiftKey&&k==="o"){e.preventDefault();noteShortcut("open");return $("#fileInput")?.click()}
  if(mod&&e.shiftKey&&k==="l"){e.preventDefault();return cycleTagMode()}
  if(mod&&k==="s"){e.preventDefault();noteShortcut("save");return saveLocal()}
  if(mod&&k==="f"&&!e.shiftKey){e.preventDefault();noteShortcut("find");return showFindReplace("text")}
