@@ -886,3 +886,9 @@ Scenario Practice deliberately does not tell the learner which buttons to press.
 
 ## v7.39 — Close import dialog after restore
 - Fixed JSON document restore so the Import document backup dialog closes automatically after a successful Replace current document or Add as new document action.
+
+## v7.40 — Repair duplicate XML IDs in old backups
+- Import now detects duplicate explicit XML IDs left in backups created before the structural Copy/Paste fix.
+- The first occurrence is preserved; later duplicates have the copied explicit ID cleared.
+- Repair works for both single-document JSON backups and full project backups.
+- The import dialog reports how many legacy duplicate IDs were repaired.

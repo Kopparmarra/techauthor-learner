@@ -1069,6 +1069,7 @@ function validateImportedProjectObject(project){
    if(!d||typeof d!=="object")throw new Error(`Document ${i+1} is invalid.`);
    if(!d.id)d.id="d"+Math.random().toString(36).slice(2,8);
    if(!d.model||!Array.isArray(d.model.nodes))throw new Error(`Document ${i+1} is missing a valid model.`);
+   repairDuplicateExplicitXmlIds(d.model);
    if(!Array.isArray(d.comments))d.comments=[];
    if(!Array.isArray(d.history))d.history=[];
  });
@@ -1078,13 +1079,38 @@ function validateImportedProjectObject(project){
  if(!Array.isArray(project.illustrations))project.illustrations=[];
  return project;
 }
+
+function repairDuplicateExplicitXmlIds(model){
+ if(!model||!Array.isArray(model.nodes))return 0;
+ const seen=new Set();
+ let repaired=0;
+ const walk=nodes=>(nodes||[]).forEach(n=>{
+   const explicit=String(n?.attrs?.id||n?.xmlId||"").trim();
+   if(explicit){
+     if(seen.has(explicit)){
+       if(n.attrs&&typeof n.attrs==="object"&&"id" in n.attrs)delete n.attrs.id;
+       if("xmlId" in n)n.xmlId="";
+       repaired++;
+     }else{
+       seen.add(explicit);
+     }
+   }
+   if(n.children)walk(n.children);
+ });
+ walk(model.nodes);
+ return repaired;
+}
+
 function validateImportedDocumentBackup(raw){
  if(!raw||typeof raw!=="object"||!raw.model||!Array.isArray(raw.model.nodes))
    throw new Error("The JSON is not a TechAuthor document backup.");
+ const model=JSON.parse(JSON.stringify(raw.model));
+ const repairedDuplicateIds=repairDuplicateExplicitXmlIds(model);
  return {
-   model:JSON.parse(JSON.stringify(raw.model)),
+   model,
    history:Array.isArray(raw.history)?JSON.parse(JSON.stringify(raw.history)):[],
-   comments:Array.isArray(raw.comments)?JSON.parse(JSON.stringify(raw.comments)):[]
+   comments:Array.isArray(raw.comments)?JSON.parse(JSON.stringify(raw.comments)):[],
+   repairedDuplicateIds
  };
 }
 function uniquifyImportedProject(project){
@@ -1164,6 +1190,7 @@ function chooseDocumentImportMode(backup){
  showModal("Import document backup",`
   <p><strong>${esc(title)}</strong>${dmc?`<br><span class="small-muted">${esc(dmc)}</span>`:""}</p>
   <div class="learning-callout">This JSON was created by <strong>Save As / Export → Project JSON</strong>. Despite the old label, it contains one document, not a whole project.</div>
+  ${backup.repairedDuplicateIds?`<div class="learning-callout"><strong>Legacy repair:</strong> ${backup.repairedDuplicateIds} duplicate copied XML ID${backup.repairedDuplicateIds===1?" was":"s were"} cleared during import.</div>`:""}
   <div class="export-grid">
    <button class="export-option" id="importDocReplaceBtn"><strong>Replace current document</strong><span>Best for restoring work after an app update</span></button>
    <button class="export-option" id="importDocAddBtn"><strong>Add as new document</strong><span>Keep the current document and add this backup to the project</span></button>
