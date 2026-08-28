@@ -282,7 +282,7 @@ function openMainMenu(menu){
       <button class="export-option" id="fileOpenFromCsdb"><strong>${k("Ctrl+O","Open")}</strong><span>Open managed content / file</span></button>
       <button class="export-option" id="fileSave"><strong>${k("Ctrl+S","Save")}</strong><span>Save current document</span></button>
       <button class="export-option" id="fileExport"><strong>Save As / Export</strong><span>XML, Markdown, JSON or HTML</span></button>
-      <button class="export-option" id="fileImportProject"><strong>Import Project</strong><span>Restore a project exported as JSON</span></button>
+      <button class="export-option" id="fileImportProject"><strong>Import JSON Backup</strong><span>Restore a document or project JSON backup</span></button>
       <button class="export-option" id="fileCheckIn"><strong>Check in</strong><span>CSDB workflow extension in this trainer</span></button>
       <button class="export-option" id="fileReset"><strong>Revert / Reload demo</strong><span>Restore startup example</span></button>
     </div><div class="menu-note">Arbortext File also includes New, Close, Save All, Print Preview, Print and Publish. The trainer keeps the subset useful for authoring practice.</div>`);
@@ -1059,6 +1059,7 @@ function duplicateCurrentDocument(){
  copy.history=[hist("Document duplicated")];p.documents.push(copy);p.activeDocumentId=copy.id;saveProjects({persistCurrent:false});loadActiveDocument();
 }
 
+
 function validateImportedProjectObject(project){
  if(!project||typeof project!=="object")throw new Error("The JSON does not contain a project object.");
  if(!Array.isArray(project.documents))throw new Error("The project is missing a documents array.");
@@ -1076,6 +1077,15 @@ function validateImportedProjectObject(project){
    project.activeDocumentId=project.documents[0]?.id||null;
  if(!Array.isArray(project.illustrations))project.illustrations=[];
  return project;
+}
+function validateImportedDocumentBackup(raw){
+ if(!raw||typeof raw!=="object"||!raw.model||!Array.isArray(raw.model.nodes))
+   throw new Error("The JSON is not a TechAuthor document backup.");
+ return {
+   model:JSON.parse(JSON.stringify(raw.model)),
+   history:Array.isArray(raw.history)?JSON.parse(JSON.stringify(raw.history)):[],
+   comments:Array.isArray(raw.comments)?JSON.parse(JSON.stringify(raw.comments)):[]
+ };
 }
 function uniquifyImportedProject(project){
  const used=new Set(state.projects.map(p=>p.id));
@@ -1122,9 +1132,52 @@ function chooseProjectImportMode(project){
   });
  },0);
 }
+function restoreImportedDocument(backup,mode){
+ const p=getActiveProject();if(!p)throw new Error("No active project is open.");
+ const model=JSON.parse(JSON.stringify(backup.model));
+ const title=model.meta?.title||"Imported document";
+ const dmc=model.meta?.dmc||"IMPORTED-DM";
+ if(mode==="replace"){
+   const d=getActiveDocument();if(!d)throw new Error("No active document is open.");
+   d.model=model;
+   d.title=title;
+   d.dmc=dmc;
+   d.history=JSON.parse(JSON.stringify(backup.history||[]));
+   d.comments=JSON.parse(JSON.stringify(backup.comments||[]));
+   state.model=JSON.parse(JSON.stringify(model));
+   state.history=JSON.parse(JSON.stringify(d.history));
+   state.selectedId=state.model.nodes[0]?.id||null;
+ }else{
+   let id="d"+Math.random().toString(36).slice(2,8);
+   while(p.documents.some(d=>d.id===id))id="d"+Math.random().toString(36).slice(2,8);
+   const d={id,title,dmc,group:"dataModules",kind:"procedure",model,comments:backup.comments||[],history:backup.history||[]};
+   p.documents.push(d);p.activeDocumentId=id;
+ }
+ saveProjects({persistCurrent:false});
+ loadActiveDocument();renderTree();
+ toast(mode==="replace"?"Restored current document":"Imported document backup");
+}
+function chooseDocumentImportMode(backup){
+ const title=backup.model?.meta?.title||"Imported document";
+ const dmc=backup.model?.meta?.dmc||"";
+ showModal("Import document backup",`
+  <p><strong>${esc(title)}</strong>${dmc?`<br><span class="small-muted">${esc(dmc)}</span>`:""}</p>
+  <div class="learning-callout">This JSON was created by <strong>Save As / Export → Project JSON</strong>. Despite the old label, it contains one document, not a whole project.</div>
+  <div class="export-grid">
+   <button class="export-option" id="importDocReplaceBtn"><strong>Replace current document</strong><span>Best for restoring work after an app update</span></button>
+   <button class="export-option" id="importDocAddBtn"><strong>Add as new document</strong><span>Keep the current document and add this backup to the project</span></button>
+  </div>`,
+  `<button class="btn" data-close>Cancel</button>`);
+ setTimeout(()=>{
+  $("#importDocReplaceBtn")?.addEventListener("click",()=>{
+   if(confirm("Replace the current document with this backup?"))restoreImportedDocument(backup,"replace");
+  });
+  $("#importDocAddBtn")?.addEventListener("click",()=>restoreImportedDocument(backup,"add"));
+ },0);
+}
 function importProjectFromFile(){
  const input=$("#projectImportInput");
- if(!input)return alert("Project import control is unavailable.");
+ if(!input)return alert("Import control is unavailable.");
  input.value="";input.click();
 }
 function handleProjectImportFile(file){
@@ -1133,14 +1186,22 @@ function handleProjectImportFile(file){
  reader.onload=()=>{
   try{
    const raw=JSON.parse(String(reader.result||""));
-   const project=(raw&&raw.project&&typeof raw.project==="object")?raw.project:raw;
-   validateImportedProjectObject(project);
-   chooseProjectImportMode(project);
+   const candidate=(raw&&raw.project&&typeof raw.project==="object")?raw.project:raw;
+   if(Array.isArray(candidate?.documents)){
+     validateImportedProjectObject(candidate);
+     chooseProjectImportMode(candidate);
+     return;
+   }
+   if(candidate?.model&&Array.isArray(candidate.model.nodes)){
+     chooseDocumentImportMode(validateImportedDocumentBackup(candidate));
+     return;
+   }
+   throw new Error("The file is neither a project backup nor a document backup.");
   }catch(err){
-   console.error(err);alert("Could not import project: "+err.message);
+   console.error(err);alert("Could not import backup: "+err.message);
   }
  };
- reader.onerror=()=>alert("Could not read the selected project file.");
+ reader.onerror=()=>alert("Could not read the selected backup file.");
  reader.readAsText(file);
 }
 
@@ -3537,7 +3598,7 @@ function showModal(title,body,actions=`<button class="btn" data-close>Close</but
 function showExport(){showModal("Export document",`<div class="export-grid">
 <button class="export-option" data-export="xml"><strong>S1000D-style XML</strong><span>Structured demo XML</span></button>
 <button class="export-option" data-export="md"><strong>Markdown</strong><span>Software documentation format</span></button>
-<button class="export-option" data-export="json"><strong>Project JSON</strong><span>Model + metadata + history</span></button>
+<button class="export-option" data-export="json"><strong>Document JSON</strong><span>Current document + metadata + history</span></button>
 <button class="export-option" data-export="html"><strong>Standalone HTML</strong><span>Readable publication preview</span></button></div>`);$$("[data-export]").forEach(b=>b.onclick=()=>doExport(b.dataset.export))}
 function download(name,content,type="text/plain"){const blob=new Blob([content],{type}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
 function doExport(k){const b=(state.model.meta.dmc||"document").replace(/[^\w-]+/g,"_");if(k==="xml")download(b+".xml",modelToXml(),"application/xml");if(k==="md")download(b+".md",modelToMarkdown(),"text/markdown");if(k==="json")download(b+".json",JSON.stringify({model:state.model,history:state.history},null,2),"application/json");if(k==="html"){renderPreview();download(b+".html",`<!doctype html><meta charset="utf-8"><title>${esc(state.model.meta.title)}</title><body style="font-family:Arial;max-width:900px;margin:40px auto;line-height:1.5">${$("#previewPane").innerHTML}</body>`,"text/html")}$("#modalBackdrop").classList.add("hidden")}

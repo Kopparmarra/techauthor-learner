@@ -878,3 +878,8 @@ Scenario Practice deliberately does not tell the learner which buttons to press.
 - Added File → Import Project for JSON backups made with Export project.
 - Import as a new project or replace the current browser project.
 - Validates project/document structure before restore.
+
+## v7.38 — Restore old document JSON backups
+- `File → Import JSON Backup` now detects both full project backups and the older single-document JSON export (`{model, history}`).
+- Single-document backups can replace the current document or be added as a new document.
+- Renamed the document export from `Project JSON` to `Document JSON` to match what it actually contains.
