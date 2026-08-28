@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>TechAuthor Learner v7.14</title>
-  <link rel="stylesheet" href="styles.css?v=7.35">
+  <link rel="stylesheet" href="styles.css?v=7.36">
 </head>
 <body>
 <div id="app">
@@ -13,7 +13,7 @@
       <div class="brand-mark">TA</div>
       <div>
         <div class="brand-title">TechAuthor Learner</div>
-        <div class="brand-subtitle">Arbortext-like structured authoring trainer · v7.35</div>
+        <div class="brand-subtitle">Arbortext-like structured authoring trainer · v7.36</div>
       </div>
     </div>
     <div class="project-strip">
@@ -243,7 +243,7 @@
       <div id="applicabilityTab" class="right-tab-content hidden">
         <div class="applicability-editor">
           <h3>Applicability</h3>
-          <p class="small-muted">Demo editor for product/version/effectivity conditions.</p>
+          <p class="small-muted">Demo editor for product/version/effectivity conditions. The expression is generated from the controlled fields.</p>
           <label>Product
             <select id="appProduct">
               <option>Surface Sensor Software</option>
@@ -263,7 +263,7 @@
           <label>Software from<input id="appSwFrom" value="4.0.0"></label>
           <label>Software to<input id="appSwTo" value="4.9.x"></label>
           <label>Serial/effectivity<input id="appSerial" value="All serials"></label>
-          <label>Expression<textarea id="appExpression">product == "Surface Sensor Software" AND software >= "4.0.0"</textarea></label>
+          <label>Expression<textarea id="appExpression" readonly>product == "Surface Sensor Software" AND software >= "4.0.0"</textarea></label>
           <button id="applyApplicabilityBtn" class="btn accent full">Apply applicability</button>
           <div id="applicabilityPreview" class="app-preview"></div>
         </div>
@@ -423,8 +423,8 @@
 </div>
 
 <!-- Load order: pure data → drills curriculum → application runtime (no bundler). -->
-<script src="js/schema.js?v=7.35"></script>
-<script src="js/drills.js?v=7.35"></script>
-<script src="app.js?v=7.35"></script>
+<script src="js/schema.js?v=7.36"></script>
+<script src="js/drills.js?v=7.36"></script>
+<script src="app.js?v=7.36"></script>
 </body>
 </html>

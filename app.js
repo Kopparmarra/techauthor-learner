@@ -93,19 +93,12 @@ function criticalClickAction(id,el){
       const swFrom=$("#appSwFrom")?.value||"";
       const swTo=$("#appSwTo")?.value||"";
       const serial=$("#appSerial")?.value||"";
-      let expression=$("#appExpression")?.value||"";
-      if(state.scenarioActive&&["sc3","sc10","sc11"].includes(state.trainingExercise?.id)){
-        const parts=[];
-        if(product)parts.push(`product == "${product}"`);
-        if(variant&&variant!=="All"){
-          const variantCode=/^Variant\s+(.+)$/i.exec(variant)?.[1]||variant;
-          parts.push(`variant == "${variantCode}"`);
-        }
-        if(swFrom)parts.push(`software >= "${swFrom}"`);
-        if(swTo)parts.push(`software <= "${swTo}"`);
-        expression=parts.join(" AND ");
-        if($("#appExpression"))$("#appExpression").value=expression;
+      if(swFrom&&swTo&&compareVersionStrings(swFrom,swTo)>0){
+        state.undoStack.pop();updateUndoRedoButtons();
+        return alert("Software from cannot be later than Software to.");
       }
+      const expression=buildApplicabilityExpression({product,variant,swFrom,swTo});
+      if($("#appExpression"))$("#appExpression").value=expression;
       state.model.applicability={product,variant,swFrom,swTo,serial,expression};
       if(typeof renderApplicabilityPreview==="function")renderApplicabilityPreview();
       markDirty();return validate();
@@ -1955,7 +1948,7 @@ function renderDocumentMap(holder,q){
  let stepNo=0;
  function addNode(n,depth,parentEl){
    let label=n.type;
-   if(n.type==="title"||n.type==="sectionTitle"||n.type==="para"||n.type==="warning"||n.type==="note"||n.type==="cmd")
+   if(n.type==="title"||n.type==="sectionTitle"||n.type==="para"||n.type==="warning"||n.type==="caution"||n.type==="note"||n.type==="cmd")
      label+=` — ${(n.text||"").replace(/\s+/g," ").slice(0,46)}`;
    if(n.type==="step"){stepNo++;label=`step ${stepNo} — ${(n.text||"").replace(/\s+/g," ").slice(0,42)}`}
    if(n.type==="table")label=`table — ${(n.rows?.[0]||[]).join(" / ").slice(0,42)}`;
@@ -2090,6 +2083,10 @@ function cloneStructuredNode(node){
  const copy=JSON.parse(JSON.stringify(node));
  const reid=n=>{
    n.id=uid();
+   // A structural copy must not reuse an XML ID from the source element.
+   // The trainer can assign a new explicit XML ID later if the project requires one.
+   if("xmlId" in n)n.xmlId="";
+   if(n.attrs&&typeof n.attrs==="object"&&"id" in n.attrs)delete n.attrs.id;
    if(n.children)n.children.forEach(reid);
  };
  reid(copy);
@@ -2554,6 +2551,7 @@ function renderAuthor(){
   if(tagMode==="full"){const open=document.createElement("span");open.className="tag-open";const attrText=Object.entries(attrs).filter(([k,v])=>v!==""&&v!=null&&k!=="id").map(([k,v])=>` ${k}="${v}"`).join("");open.textContent=`<${n.type}${attrText}>`;el.appendChild(open);}
 
   if(n.type==="warning")el.classList.add("warning-node");
+  if(n.type==="caution")el.classList.add("caution-node");
   if(n.type==="note")el.classList.add("note-node");
   if(n.type==="step")el.classList.add("step-node");
   if(n.type==="cmd")el.classList.add("cmd-node");
@@ -2823,7 +2821,7 @@ function redoAction(){
  toast(`Redo: ${snap.label}`);
 }
 function defaultText(type){
- return {title:"New title",sectionTitle:"New section",para:"New paragraph.",warning:"Add warning text.",note:"Add note text.",step:"Add procedure step.",cmd:"Add command.",codeblock:"command --option value"}[type]||"";
+ return {title:"New title",sectionTitle:"New section",para:"New paragraph.",warning:"Add warning text.",caution:"Add caution text.",note:"Add note text.",step:"Add procedure step.",cmd:"Add command.",codeblock:"command --option value"}[type]||"";
 }
 function deleteSelected(){
  if(isLocked())return alert("Approved documents are locked.");
@@ -2860,11 +2858,12 @@ function modelToXml(){
  const nodeXml=n=>{
   const attr=[n.xmlId?` id="${esc(n.xmlId)}"`:"",n.className?` class="${esc(n.className)}"`:""].join("");
   if(n.type==="table")return `<table${attr}>${(n.rows||[]).map((r,ri)=>`<row>${r.map(c=>`<${ri===0?"entry":"entry"}>${esc(c)}</${ri===0?"entry":"entry"}>`).join("")}</row>`).join("")}</table>`;
-  const map={title:"title",sectionTitle:"title",para:"para",warning:"warningAndCautionPara",note:"notePara",step:"proceduralStep",cmd:"para",codeblock:"codeblock"};
+  const map={title:"title",sectionTitle:"title",para:"para",warning:"warningAndCautionPara",caution:"warningAndCautionPara",note:"notePara",step:"proceduralStep",cmd:"para",codeblock:"codeblock"};
   const tag=map[n.type]||n.type;
   const xrefs=(n.xrefs||[]).map(x=>`<dmRef><dmRefIdent><dmCode demoDmc="${esc(x.dmc)}"/></dmRefIdent></dmRef>`).join("");
   const kids=xrefs+(n.children||[]).map(nodeXml).join("");
   if(n.type==="warning")return `<warning${attr}><warningAndCautionPara>${esc(n.text||"")}</warningAndCautionPara>${kids}</warning>`;
+  if(n.type==="caution")return `<caution${attr}><warningAndCautionPara>${esc(n.text||"")}</warningAndCautionPara>${kids}</caution>`;
   if(n.type==="note")return `<note${attr}><notePara>${esc(n.text||"")}</notePara>${kids}</note>`;
   if(n.type==="step")return `<proceduralStep${attr}><para>${esc(n.text||"")}</para>${kids}</proceduralStep>`;
   return `<${tag}${attr}>${esc(n.text||"")}${kids}</${tag}>`;
@@ -2906,6 +2905,7 @@ function xmlToModel(xmlText){
  for(const el of children){
   const t=el.tagName;
   if(t==="warning"){nodes.push({id:uid(),type:"warning",text:el.querySelector("warningAndCautionPara")?.textContent||""});continue}
+  if(t==="caution"){nodes.push({id:uid(),type:"caution",text:el.querySelector("warningAndCautionPara")?.textContent||""});continue}
   if(t==="note"){nodes.push({id:uid(),type:"note",text:el.querySelector("notePara")?.textContent||""});continue}
   if(t==="proceduralStep"){
    const direct=[...el.children];const firstPara=direct.find(c=>c.tagName==="para");
@@ -3363,6 +3363,24 @@ function syncModelFromControls(){
  const m=state.model.meta;m.dmc=$("#dmcInput").value;m.issue=$("#issueInput").value;m.lang=$("#langInput").value;m.title=$("#titleInput").value;m.security=$("#securityInput").value;m.workflow=$("#workflowInput").value;m.author=$("#authorInput").value;m.responsible=$("#responsibleInput").value;m.reviewer=$("#reviewerInput").value;syncTitles();
 }
 function syncTitles(){$("#currentDocLabel").textContent=`DM ${state.model.meta.dmc}`;$("#docTabTitle").textContent=`${state.model.meta.dmc} — ${state.model.meta.title}`}
+function buildApplicabilityExpression({product="",variant="All",swFrom="",swTo=""}={}){
+ const parts=[];
+ if(product)parts.push(`product == "${product}"`);
+ if(variant&&variant!=="All"){
+   const variantCode=/^Variant\s+(.+)$/i.exec(variant)?.[1]||variant;
+   parts.push(`variant == "${variantCode}"`);
+ }
+ if(swFrom)parts.push(`software >= "${swFrom}"`);
+ if(swTo)parts.push(`software <= "${swTo}"`);
+ return parts.join(" AND ");
+}
+function compareVersionStrings(a,b){
+ const pa=String(a||"").split(".").map(x=>parseInt(x,10)||0);
+ const pb=String(b||"").split(".").map(x=>parseInt(x,10)||0);
+ const len=Math.max(pa.length,pb.length);
+ for(let i=0;i<len;i++){const d=(pa[i]||0)-(pb[i]||0);if(d)return d}
+ return 0;
+}
 function renderApplicabilityPreview(){const a=state.model.applicability;$("#applicabilityPreview").innerHTML=`<strong>Current applicability</strong><br>Product: ${esc(a.product)}<br>Variant: ${esc(a.variant)}<br>Software: ${esc(a.swFrom)} → ${esc(a.swTo)}<br>Effectivity: ${esc(a.serial)}<br><br><code>${esc(a.expression)}</code>`}
 
 function saveLocal(){
@@ -3384,6 +3402,7 @@ function modelToMarkdown(){
   if(n.type==="sectionTitle")o+=`## ${n.text}\n\n`;
   else if(n.type==="para")o+=`${n.text}\n\n`;
   else if(n.type==="warning")o+=`> **WARNING:** ${n.text}\n\n`;
+  else if(n.type==="caution")o+=`> **CAUTION:** ${n.text}\n\n`;
   else if(n.type==="note")o+=`> **NOTE:** ${n.text}\n\n`;
   else if(n.type==="step"){o+=`1. ${n.text}\n`; (n.children||[]).forEach(c=>o+=`   - ${c.text}\n`);o+="\n"}
   else if(n.type==="codeblock")o+=`\`\`\`text\n${n.text}\n\`\`\`\n\n`;
@@ -3829,7 +3848,7 @@ $("#themeBtn").onclick=()=>document.body.classList.toggle("compact");
 $("#submitReviewBtn").onclick=()=>setWorkflow("In Review");$("#approveBtn").onclick=()=>setWorkflow("Approved");$("#returnBtn").onclick=()=>setWorkflow("In Work");
 $("#workflowInput").onchange=()=>{$("#workflowInput").value=state.model.meta.workflow;alert("Use the workflow action buttons to change state.")};
 $("#applyElementPropsBtn").onclick=()=>{const r=getNodeById(state.selectedId);if(!r)return;r.node.xmlId=$("#selectedElementId").value.trim();r.node.className=$("#selectedElementClass").value.trim();state.history.unshift(hist(`Updated properties on <${r.node.type}>`));markDirty();syncSourcePassive()};
-$("#applyApplicabilityBtn").onclick=()=>{state.model.applicability={product:$("#appProduct").value,variant:$("#appVariant").value,swFrom:$("#appSwFrom").value,swTo:$("#appSwTo").value,serial:$("#appSerial").value,expression:$("#appExpression").value};renderApplicabilityPreview();state.history.unshift(hist("Updated applicability"));markDirty();syncSourcePassive()};
+$("#applyApplicabilityBtn").onclick=()=>{}; // handled by the capture-phase critical dispatcher
 $("#ruleProfileInput").addEventListener("change",()=>{
   if($("#brexProfileSelect"))$("#brexProfileSelect").value=$("#ruleProfileInput").value;
   refreshInsertOptions();renderBrexPanel();validate();

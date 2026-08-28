@@ -863,3 +863,13 @@ Scenario Practice deliberately does not tell the learner which buttons to press.
 - New copies receive fresh internal IDs.
 - Normal highlighted-text copy and text paste are preserved.
 - Added `Copy Element` and `Paste Element` to the Edit menu.
+
+## v7.36 — CAUTION + applicability reliability
+- Added `caution` as a valid top-level and step child element.
+- CAUTION has its own editor styling and Element Coach guidance.
+- XML export uses `<caution><warningAndCautionPara>…</warningAndCautionPara></caution>`.
+- Markdown export renders `> **CAUTION:** …`.
+- Applicability expressions are now generated from Product / Variant / Software from / Software to on every Apply, preventing field/expression mismatch.
+- Added a guard against inverted software ranges (`from` later than `to`).
+- Applicability expression is read-only in the normal UI because the controlled fields are the authoring surface.
+- Structural Copy/Paste now clears copied explicit XML IDs recursively, preventing the duplicate-ID errors seen after copying steps.

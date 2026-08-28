@@ -2,13 +2,14 @@
  * Loaded before app.js (classic script, no bundler).
  */
 const schema = {
-  mainProcedure:["title","sectionTitle","para","warning","note","step","codeblock","table"],
+  mainProcedure:["title","sectionTitle","para","warning","caution","note","step","codeblock","table"],
   title:[],
   sectionTitle:[],
   para:[],
   warning:[],
+  caution:[],
   note:[],
-  step:["cmd","note","warning","codeblock"],
+  step:["cmd","note","warning","caution","codeblock"],
   cmd:[],
   codeblock:[],
   table:[]
@@ -33,8 +34,9 @@ const brexProfiles = {
     disallowedByContext:{
       mainProcedure:[],
       step:["title","sectionTitle","table","para"],
-      warning:["title","sectionTitle","step","cmd","table","codeblock","para","note","warning"],
-      note:["title","sectionTitle","step","cmd","table","codeblock","para","note","warning"]
+      warning:["title","sectionTitle","step","cmd","table","codeblock","para","note","warning","caution"],
+      caution:["title","sectionTitle","step","cmd","table","codeblock","para","note","warning","caution"],
+      note:["title","sectionTitle","step","cmd","table","codeblock","para","note","warning","caution"]
     }
   },
   balanced:{
@@ -48,8 +50,9 @@ const brexProfiles = {
     disallowedByContext:{
       mainProcedure:[],
       step:["title","sectionTitle","table"],
-      warning:["title","sectionTitle","step","cmd","table","codeblock","para","note","warning"],
-      note:["title","sectionTitle","step","cmd","table","codeblock","para","note","warning"]
+      warning:["title","sectionTitle","step","cmd","table","codeblock","para","note","warning","caution"],
+      caution:["title","sectionTitle","step","cmd","table","codeblock","para","note","warning","caution"],
+      note:["title","sectionTitle","step","cmd","table","codeblock","para","note","warning","caution"]
     }
   },
   training:{
@@ -73,7 +76,8 @@ const elementLessons={
  title:{summary:"The title identifies the purpose of the current data module.",role:"Document identification",parents:["mainProcedure"],good:"Keep the title short and aligned with the DM scope.",common:"Do not use the title as a paragraph."},
  sectionTitle:{summary:"A sectionTitle introduces a logical subsection.",role:"Section heading",parents:["mainProcedure"],good:"Use it for meaningful information divisions.",common:"Do not add headings only for visual styling."},
  para:{summary:"A para contains explanatory or supporting prose.",role:"General text",parents:["mainProcedure"],good:"Keep one purpose per paragraph.",common:"Do not hide actions inside long prose."},
- warning:{summary:"A warning communicates a safety-critical condition.",role:"Safety information",parents:["mainProcedure","step"],good:"Place it before the relevant action.",common:"Do not overuse warnings."},
+ warning:{summary:"A warning communicates a condition that can cause injury to personnel.",role:"Personnel safety",parents:["mainProcedure","step"],good:"Place it before the action or condition that creates the hazard.",common:"Do not use WARNING for equipment-only damage."},
+ caution:{summary:"A caution communicates a condition that can damage equipment, software, data or the system.",role:"Equipment / system protection",parents:["mainProcedure","step"],good:"Place it before the action that can cause damage.",common:"Do not use CAUTION for supplementary information that belongs in a note."},
  note:{summary:"A note gives supplementary information, not the main instruction.",role:"Supporting information",parents:["mainProcedure","step"],good:"Use for clarification or useful context.",common:"Do not put mandatory actions inside a note."},
  step:{summary:"A step groups one procedural action and its subordinate commands.",role:"Procedure structure",parents:["mainProcedure"],good:"Keep one clear action per step.",common:"Do not combine unrelated actions."},
  cmd:{summary:"A cmd is the direct action the user must perform.",role:"Instruction",parents:["step"],good:"Start with an imperative verb.",common:"Avoid vague descriptive wording."},

@@ -1136,3 +1136,12 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .scenario-level{
   white-space:nowrap;
 }
+
+/* v7.36 — CAUTION element */
+.xml-node.caution-node{
+  border:1px solid #c58b16;
+  border-left:4px solid #c58b16;
+  background:#fff7df;
+  padding-top:9px;
+  padding-bottom:9px;
+}
