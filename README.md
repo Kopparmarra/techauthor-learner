@@ -873,3 +873,8 @@ Scenario Practice deliberately does not tell the learner which buttons to press.
 - Added a guard against inverted software ranges (`from` later than `to`).
 - Applicability expression is read-only in the normal UI because the controlled fields are the authoring surface.
 - Structural Copy/Paste now clears copied explicit XML IDs recursively, preventing the duplicate-ID errors seen after copying steps.
+
+## v7.37 — Import Project
+- Added File → Import Project for JSON backups made with Export project.
+- Import as a new project or replace the current browser project.
+- Validates project/document structure before restore.

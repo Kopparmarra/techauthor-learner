@@ -282,6 +282,7 @@ function openMainMenu(menu){
       <button class="export-option" id="fileOpenFromCsdb"><strong>${k("Ctrl+O","Open")}</strong><span>Open managed content / file</span></button>
       <button class="export-option" id="fileSave"><strong>${k("Ctrl+S","Save")}</strong><span>Save current document</span></button>
       <button class="export-option" id="fileExport"><strong>Save As / Export</strong><span>XML, Markdown, JSON or HTML</span></button>
+      <button class="export-option" id="fileImportProject"><strong>Import Project</strong><span>Restore a project exported as JSON</span></button>
       <button class="export-option" id="fileCheckIn"><strong>Check in</strong><span>CSDB workflow extension in this trainer</span></button>
       <button class="export-option" id="fileReset"><strong>Revert / Reload demo</strong><span>Restore startup example</span></button>
     </div><div class="menu-note">Arbortext File also includes New, Close, Save All, Print Preview, Print and Publish. The trainer keeps the subset useful for authoring practice.</div>`);
@@ -338,6 +339,7 @@ function openMainMenu(menu){
       $("#fileSave")?.addEventListener("click",()=>{saveLocal();$("#modalBackdrop").classList.add("hidden")});
       $("#fileCheckIn")?.addEventListener("click",()=>{checkInCurrent();$("#modalBackdrop").classList.add("hidden")});
       $("#fileExport")?.addEventListener("click",()=>{$("#modalBackdrop").classList.add("hidden");showExport()});
+      $("#fileImportProject")?.addEventListener("click",()=>{$("#modalBackdrop").classList.add("hidden");importProjectFromFile()});
       $("#fileReset")?.addEventListener("click",()=>{resetDemo();$("#modalBackdrop").classList.add("hidden")});
       $("#applyXmlModal")?.addEventListener("click",()=>{$("#modalBackdrop").classList.add("hidden");applySourceToContent()});
     },0);
@@ -1056,6 +1058,92 @@ function duplicateCurrentDocument(){
  const copy=JSON.parse(JSON.stringify(d));copy.id="d"+Math.random().toString(36).slice(2,8);copy.title=d.title+" — Copy";copy.model.meta.title=copy.title;copy.model.meta.dmc=d.dmc+"-COPY";
  copy.history=[hist("Document duplicated")];p.documents.push(copy);p.activeDocumentId=copy.id;saveProjects({persistCurrent:false});loadActiveDocument();
 }
+
+function validateImportedProjectObject(project){
+ if(!project||typeof project!=="object")throw new Error("The JSON does not contain a project object.");
+ if(!Array.isArray(project.documents))throw new Error("The project is missing a documents array.");
+ if(!project.id)project.id="p"+Math.random().toString(36).slice(2,9);
+ if(!project.name)project.name="Imported TechAuthor Project";
+ project.documents.forEach((d,i)=>{
+   if(!d||typeof d!=="object")throw new Error(`Document ${i+1} is invalid.`);
+   if(!d.id)d.id="d"+Math.random().toString(36).slice(2,8);
+   if(!d.model||!Array.isArray(d.model.nodes))throw new Error(`Document ${i+1} is missing a valid model.`);
+   if(!Array.isArray(d.comments))d.comments=[];
+   if(!Array.isArray(d.history))d.history=[];
+ });
+ if(project.documents.length&&!project.activeDocumentId)project.activeDocumentId=project.documents[0].id;
+ if(project.activeDocumentId&&!project.documents.some(d=>d.id===project.activeDocumentId))
+   project.activeDocumentId=project.documents[0]?.id||null;
+ if(!Array.isArray(project.illustrations))project.illustrations=[];
+ return project;
+}
+function uniquifyImportedProject(project){
+ const used=new Set(state.projects.map(p=>p.id));
+ if(used.has(project.id))project.id="p"+Math.random().toString(36).slice(2,9);
+ const seen=new Set();
+ project.documents.forEach(d=>{
+   if(seen.has(d.id))d.id="d"+Math.random().toString(36).slice(2,8);
+   seen.add(d.id);
+ });
+ return project;
+}
+function restoreImportedProject(project,mode){
+ persistCurrentDocument();
+ project=validateImportedProjectObject(JSON.parse(JSON.stringify(project)));
+ if(mode==="new"){
+   project=uniquifyImportedProject(project);
+   project.name=(project.name||"Imported TechAuthor Project")+" — Imported";
+   state.projects.push(project);state.activeProjectId=project.id;
+ }else{
+   const idx=state.projects.findIndex(p=>p.id===state.activeProjectId);
+   if(idx<0)throw new Error("No active project is available to replace.");
+   project.id=state.projects[idx].id;
+   state.projects[idx]=project;state.activeProjectId=project.id;
+ }
+ saveProjects({persistCurrent:false});
+ loadActiveDocument();renderTree();
+ toast(mode==="new"?"Imported project as new":"Replaced current project from backup");
+}
+function chooseProjectImportMode(project){
+ const docCount=project.documents?.length||0;
+ showModal("Import Project",`
+  <p><strong>${esc(project.name||"Imported project")}</strong></p>
+  <p>${docCount} document${docCount===1?"":"s"} found in the JSON backup.</p>
+  <div class="learning-callout">Choose whether to keep your current project or restore this backup over it.</div>
+  <div class="export-grid">
+   <button class="export-option" id="importProjectNewBtn"><strong>Import as new project</strong><span>Keep the current project and add this backup separately</span></button>
+   <button class="export-option" id="importProjectReplaceBtn"><strong>Replace current project</strong><span>Restore this backup over the current browser project</span></button>
+  </div>`,
+  `<button class="btn" data-close>Cancel</button>`);
+ setTimeout(()=>{
+  $("#importProjectNewBtn")?.addEventListener("click",()=>restoreImportedProject(project,"new"));
+  $("#importProjectReplaceBtn")?.addEventListener("click",()=>{
+   if(confirm("Replace the current project with the imported backup?"))restoreImportedProject(project,"replace");
+  });
+ },0);
+}
+function importProjectFromFile(){
+ const input=$("#projectImportInput");
+ if(!input)return alert("Project import control is unavailable.");
+ input.value="";input.click();
+}
+function handleProjectImportFile(file){
+ if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const raw=JSON.parse(String(reader.result||""));
+   const project=(raw&&raw.project&&typeof raw.project==="object")?raw.project:raw;
+   validateImportedProjectObject(project);
+   chooseProjectImportMode(project);
+  }catch(err){
+   console.error(err);alert("Could not import project: "+err.message);
+  }
+ };
+ reader.onerror=()=>alert("Could not read the selected project file.");
+ reader.readAsText(file);
+}
+
 function exportWholeProject(){
  persistCurrentDocument();const p=getActiveProject();
  download((p.name||"TechAuthor_Project").replace(/[^\w-]+/g,"_")+".json",JSON.stringify(p,null,2),"application/json");
@@ -3908,3 +3996,8 @@ $$(".menubar button").forEach(b=>b.onclick=()=>{
 
 window.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){e.preventDefault();saveLocal()}});
 window.addEventListener("beforeunload",e=>{if(state.dirty){e.preventDefault();e.returnValue=""}});
+
+$("#projectImportInput")?.addEventListener("change",e=>{
+ const file=e.target.files?.[0];
+ if(file)handleProjectImportFile(file);
+});
