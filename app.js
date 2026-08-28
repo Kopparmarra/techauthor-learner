@@ -1155,6 +1155,7 @@ function restoreImportedDocument(backup,mode){
  }
  saveProjects({persistCurrent:false});
  loadActiveDocument();renderTree();
+ $("#modalBackdrop")?.classList.add("hidden");
  toast(mode==="replace"?"Restored current document":"Imported document backup");
 }
 function chooseDocumentImportMode(backup){

@@ -883,3 +883,6 @@ Scenario Practice deliberately does not tell the learner which buttons to press.
 - `File → Import JSON Backup` now detects both full project backups and the older single-document JSON export (`{model, history}`).
 - Single-document backups can replace the current document or be added as a new document.
 - Renamed the document export from `Project JSON` to `Document JSON` to match what it actually contains.
+
+## v7.39 — Close import dialog after restore
+- Fixed JSON document restore so the Import document backup dialog closes automatically after a successful Replace current document or Add as new document action.
