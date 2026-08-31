@@ -912,3 +912,12 @@ Scenario Practice deliberately does not tell the learner which buttons to press.
 - The Document Map shortcut drill now explicitly starts from Resources.
 - Normal-view drill explicitly starts with Document Map visible.
 - Final Document Map navigation drill restores Document Map before starting.
+
+## v7.43 — Document Map tab state
+- Fixed Alt+Ctrl+O so it now switches both the left-pane content and the visible active tab from Resources to Document Map.
+
+## v7.44 — Left-pane state synchronization
+- Centralized Document Map / Resources switching in `setLeftPaneMode()`.
+- Left-pane content, active tab and visible pane state are now updated as one operation.
+- Alt+Ctrl+O, tab clicks, Insert from CSDB and beginner-drill setup all use the same state path.
+- This prevents a Resources tab from remaining highlighted while Document Map content is shown, or vice versa.

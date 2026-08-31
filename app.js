@@ -46,7 +46,7 @@ function criticalClickAction(id,el){
     case "resetDemoBtn": return resetDemo();
     case "themeBtn": return document.body.classList.toggle("compact");
     case "insertFromCsdbBtn":
-      state.leftMode="resources";$$(".left-pane .pane-tab").forEach(b=>b.classList.toggle("active",b.dataset.lefttab==="resources"));return renderTree();
+      return setLeftPaneMode("resources",{show:true});
     case "openBtn": return $("#fileInput")?.click();
     case "exportBtn": return showExport();
     case "undoBtn": state.lastLearningAction={kind:"undo"};return undoAction();
@@ -178,9 +178,7 @@ document.addEventListener("click",e=>{
     const left=e.target.closest?.(".left-pane .pane-tab[data-lefttab]");
     if(left){
       e.preventDefault();e.stopImmediatePropagation();
-      state.leftMode=left.dataset.lefttab;
-      $$(".left-pane .pane-tab").forEach(x=>x.classList.toggle("active",x===left));
-      return renderTree();
+      return setLeftPaneMode(left.dataset.lefttab,{show:true});
     }
     const basic=e.target.closest?.("[data-basic]");
     if(basic){
@@ -2334,8 +2332,36 @@ function pasteCopiedElement(){
 
 
 function cycleTagMode(){const order=["full","partial","none"],i=order.indexOf(currentTagMode());applyTagMode(order[(i+1)%3]);noteShortcut("tagcycle")}
-function showDocumentMapView(){document.querySelector(".left-pane")?.classList.remove("normal-hidden");document.querySelector(".workspace")?.classList.remove("normal-view");state.leftMode="document";renderTree();noteShortcut("docmap")}
-function showNormalView(){document.querySelector(".left-pane")?.classList.add("normal-hidden");document.querySelector(".workspace")?.classList.add("normal-view");noteShortcut("normal")}
+function setLeftPaneMode(mode,{show=true,recordShortcut=null}={}){
+ if(!["document","resources"].includes(mode))return;
+ state.leftMode=mode;
+
+ const pane=document.querySelector(".left-pane");
+ const workspace=document.querySelector(".workspace");
+ if(show){
+   pane?.classList.remove("normal-hidden");
+   workspace?.classList.remove("normal-view");
+ }
+
+ $$(".left-pane .pane-tab").forEach(b=>{
+   b.classList.toggle("active",b.dataset.lefttab===mode);
+ });
+ renderTree();
+
+ if(recordShortcut)noteShortcut(recordShortcut);
+}
+
+function showDocumentMapView(){
+ setLeftPaneMode("document",{show:true,recordShortcut:"docmap"});
+}
+function showResourcesView(){
+ setLeftPaneMode("resources",{show:true});
+}
+function showNormalView(){
+ document.querySelector(".left-pane")?.classList.add("normal-hidden");
+ document.querySelector(".workspace")?.classList.add("normal-view");
+ noteShortcut("normal");
+}
 function focusInsertMarkup(){
  const select=$("#elementSelect");
  if(!select)return;
@@ -3667,13 +3693,13 @@ if($("#emptyNewDocBtn"))$("#emptyNewDocBtn").onclick=newDocumentInProject;
 if($("#emptyImportBtn"))$("#emptyImportBtn").onclick=()=>$("#fileInput")?.click();
 if($("#treeSearch"))$("#treeSearch").oninput=renderTree;
 if($("#clearTreeSearch"))$("#clearTreeSearch").onclick=()=>{$("#treeSearch").value="";renderTree()};
-$$(".left-pane .pane-tab").forEach(b=>b.onclick=()=>{state.leftMode=b.dataset.lefttab;$$(".left-pane .pane-tab").forEach(x=>x.classList.toggle("active",x===b));renderTree()});
+$$(".left-pane .pane-tab").forEach(b=>b.onclick=()=>setLeftPaneMode(b.dataset.lefttab,{show:true}));
 if($("#expandTreeBtn"))$("#expandTreeBtn").onclick=expandAllTree;
 if($("#collapseTreeBtn"))$("#collapseTreeBtn").onclick=collapseAllTree;
 if($("#syncTreeBtn"))$("#syncTreeBtn").onclick=()=>{if(state.leftMode==="document")revealSelectedInEditor();else renderTree()};
 if($("#backToCsdbBtn"))$("#backToCsdbBtn").onclick=backToCsdb;
 if($("#checkInBtn"))$("#checkInBtn").onclick=checkInCurrent;
-if($("#insertFromCsdbBtn"))$("#insertFromCsdbBtn").onclick=()=>{state.leftMode="resources";$$(".left-pane .pane-tab").forEach(b=>b.classList.toggle("active",b.dataset.lefttab==="resources"));renderTree()};
+if($("#insertFromCsdbBtn"))$("#insertFromCsdbBtn").onclick=()=>setLeftPaneMode("resources",{show:true});
 if($("#saveBtn"))$("#saveBtn").onclick=saveLocal;
 if($("#resetDemoBtn"))$("#resetDemoBtn").onclick=resetDemo;
 if($("#openBtn"))$("#openBtn").onclick=()=>$("#fileInput")?.click();

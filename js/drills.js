@@ -376,10 +376,6 @@ function applyDrillSetup(setup){
  if(spec.initialWorkflow)state.model.meta.workflow=spec.initialWorkflow;
  if(spec.initialApplicability)state.model.applicability=JSON.parse(JSON.stringify(spec.initialApplicability));
  if(spec.initialLeftMode)state.leftMode=spec.initialLeftMode;
- if(spec.initialDocumentMapHidden===false){
-   document.querySelector(".left-pane")?.classList.remove("normal-hidden");
-   document.querySelector(".workspace")?.classList.remove("normal-view");
- }
  if(spec.initialDocumentMapHidden===true){
    document.querySelector(".left-pane")?.classList.add("normal-hidden");
    document.querySelector(".workspace")?.classList.add("normal-view");
@@ -408,6 +404,7 @@ function applyDrillSetup(setup){
  if($("#tagModeSelect"))$("#tagModeSelect").value=state.tagMode||"partial";
  renderAuthor();
  renderTree();
+ if(spec.initialLeftMode&&typeof setLeftPaneMode==="function")setLeftPaneMode(spec.initialLeftMode,{show:spec.initialDocumentMapHidden!==true});
  syncControlsFromModel();
  renderReferences();
  renderBrexPanel();
