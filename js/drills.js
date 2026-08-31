@@ -3,7 +3,7 @@
  * state, getNodeByType, getNodesByType, hasChild, $, document, etc.
  * makeDrill only builds closures; they execute after app.js has loaded.
  */
-const drillChapterSpecs=[{"id":"ch1","title":"1. Navigate & Display","focus":"Document Map, Edit view, tag display and PTC keyboard navigation","specs":[["select","title","Select the title in Document Map."],["select","para","Select the paragraph in Document Map."],["select","step","Select the step in Document Map."],["select","cmd","Select the cmd in Document Map."],["root",null,"Select mainProcedure in Document Map."],["tag","full","Switch to Full Tags."],["tag","partial","Switch to Partial Tags."],["tag","none","Switch to No Tags."],["shortcut","tagcycle","Use Ctrl+Shift+L to cycle the tag display."],["shortcut","docmap","Use Alt+Ctrl+O to show Document Map."],["shortcut","normal","Use Alt+Ctrl+N for Normal view (hide Document Map)."],["shortcut","refresh","Use Ctrl+L to refresh the editor display."],["shortcut","focus","Press F6 to cycle focus between Edit view, Document Map and markup controls."],["shortcut","collapse-element","Alt-click the selected step to collapse its content."],["view","source","Open XML/source view."],["view","content","Return to Content/Edit view."],["view","preview","Open Preview."],["lefttab","resources","Open Resources in the left pane."],["lefttab","document","Return to Document Map."],["navtop",null,"Navigate from the selected step to the title using Document Map."]]},{"id":"ch2","title":"2. Insert Markup & Quick Tags","focus":"PTC-style Quick Tags, Insert Markup and context-sensitive structure","specs":[["shortcut","markup-list","Press Control+M, then choose a valid element to insert it."],["shortcut","markup-dialog","Press Control+Shift+M, then insert any valid element from the dialog into the selected step."],["quickopen",null,"Press Enter to open Quick Tags on the selected step."],["quickinsert","cmd","Use Quick Tags to insert cmd inside the selected step."],["quickinsert","note","Use Quick Tags to insert note inside the selected step."],["quickinsert","warning","Use Quick Tags to insert warning inside the selected step."],["insert","inside","cmd","step","Insert cmd INSIDE the selected step."],["insert","inside","note","step","Insert note INSIDE the selected step."],["insert","inside","codeblock","step","Insert codeblock INSIDE the selected step."],["insert","after","para","title","Insert para AFTER the title."],["insert","after","sectionTitle","para","Insert sectionTitle AFTER the paragraph."],["insert","after","step","sectionTitle","Insert step AFTER sectionTitle."],["insert","before","warning","step","Insert warning BEFORE the step."],["leafcheck","para","With para selected, confirm no child markup is offered."],["stepchoices",null,"Select step and confirm cmd, note, warning and codeblock are valid children."],["rootinsert","para","Select mainProcedure and insert a top-level para."],["sequence",null,"Build step → cmd from the sectionTitle."],["shortcut","insert-table","Use Alt+Shift+T to insert/open a table at a valid location."],["showcontext",null,"Use Tools > Show Context for the current position."],["doctype",null,"Open Tools > Document Type Viewer."]]},{"id":"ch3","title":"3. Edit Markup & Attributes","focus":"Modify Attributes, change markup, structural movement and editing shortcuts","specs":[["shortcut","modify-attributes","Use Ctrl+D to open Modify Attributes for the selected step."],["attr","step","applicRefId","APP-01","Set applicRefId=APP-01 on the step."],["attr","para","changeMark","1","Set changeMark=1 on the paragraph."],["changemarkup",null,"Use Edit > Change Markup on the selected note."],["delete","para","Delete the selected extra paragraph."],["moveup","note","Move the note above the cmd."],["movedown","warning","Move the warning below the paragraph."],["undo",null,"Undo the accidental note with Ctrl+Z (or the Undo button)."],["redo",null,"Insert a note, undo it, then redo with Ctrl+Y."],["shortcut","save","Use Ctrl+S to save the document."],["shortcut","find","Use Ctrl+F to open the Find/Replace dialog on the Find/Replace tab."],["findtag","step","Open Find/Replace, switch to Find Tag/Attribute, enter step, and click Find Next."],["text","para","New paragraph text.","Change the paragraph text to “New paragraph text.”"],["text","cmd","Verify the system status.","Change the cmd text to “Verify the system status.”"],["elementprops",null,"Set Selected Element ID to ELEM-01 and apply it."],["table",null,"Open the Table editor."],["xref",null,"Open the Xref picker."],["comment",null,"Add a review comment (trainer workflow extension)."],["tag","full","Switch to Full Tags before structural editing."],["view","content","Return to Content/Edit view."]]},{"id":"ch4","title":"4. Find, Context & Completeness","focus":"Context Rules, Check Completeness, structural search and correction","specs":[["contexton",null,"Make sure Tools > Context Rules is ON."],["showcontext",null,"Use Tools > Show Context on the selected step."],["doctype",null,"Open Tools > Document Type Viewer."],["completeness",null,"Run Tools > Check Completeness on an incomplete step."],["fixcomplete",null,"Run Check Completeness, add the missing cmd, then run it again."],["issues",null,"Run Check Completeness, then open the Issues tab at the bottom."],["completeness",null,"Run Check Completeness again after reviewing the Issues tab."],["findtag","warning","Open Find/Replace on Find Tag/Attribute and find the next warning element."],["leafcheck","title","Select title and confirm it has no child insertions."],["stepchoices",null,"Select step and inspect its valid children."],["deletesecondtitle",null,"An imported document contains two title elements. Delete the extra title so only one remains."],["addtitle",null,"Insert the missing title before the paragraph."],["emptycleanup",null,"Delete the empty note."],["tag","full","Use Full Tags to inspect an incomplete structure."],["maintenance",null,"Add MAINTENANCE mode text to satisfy the project rule."],["applicability",null,"Set the project applicability expression and apply it."],["righttab","brex","Open the BREX Rules tab and inspect the active project rules. Then return to Learning and click Check."],["profile","balanced","Switch the active Project BREX profile to Balanced."],["profile","saab_strict","Switch the active Project BREX profile back to Strict."],["referencescheck",null,"Open References, inspect the tab, then return to Learning and click Check."]]},{"id":"ch5","title":"5. Everyday Professional Flow","focus":"A realistic authoring rhythm: navigate, insert, edit, check, save and hand off","specs":[["view","content","Make sure Content/Edit view is active."],["tag","partial","Use Partial Tags for normal editing."],["shortcut","markup-list","Press Control+M and inspect the valid markup list."],["quickinsert","cmd","Use Quick Tags to complete an empty step with cmd."],["attr","step","applicRefId","APP-01","Set applicRefId=APP-01 on the step."],["shortcut","modify-attributes","Re-open Modify Attributes with Ctrl+D."],["shortcut","find","Open the Find/Replace dialog with Ctrl+F."],["findtag","step","In the same Find/Replace dialog, switch to Find Tag/Attribute and find the next step."],["shortcut","tagcycle","Cycle tag display with Ctrl+Shift+L."],["view","source","Inspect XML/source."],["view","content","Return to Content/Edit view."],["view","preview","Preview the document."],["completeness",null,"Run Check Completeness."],["fixcomplete",null,"Fix an incomplete step and rerun Check Completeness."],["undo",null,"Undo the accidental note with Ctrl+Z (or the Undo button)."],["redo",null,"Insert a note, undo it, then redo with Ctrl+Y."],["shortcut","save","Save with Ctrl+S."],["submit",null,"In Properties > Document State, click Submit for review."],["returnauthor",null,"In Properties > Document State, click Return to author."],["checkin",null,"Click Check in in the top bar to return the DM to the CSDB."]]}];
+const drillChapterSpecs=[{"id":"ch1","title":"1. Navigate & Display","focus":"Document Map, Edit view, tag display and PTC keyboard navigation","specs":[["select","title","Select the title in Document Map."],["select","para","Select the paragraph in Document Map."],["select","step","Select the step in Document Map."],["select","cmd","Select the cmd in Document Map."],["root",null,"Select mainProcedure in Document Map."],["tag","full","Switch to Full Tags."],["tag","partial","Switch to Partial Tags."],["tag","none","Switch to No Tags."],["shortcut","tagcycle","Use Ctrl+Shift+L to cycle the tag display."],["shortcut","docmap","Use Alt+Ctrl+O to show Document Map."],["shortcut","normal","Use Alt+Ctrl+N for Normal view (hide Document Map)."],["shortcut","refresh","Use Ctrl+L to refresh the editor display."],["shortcut","focus","Press F6 to cycle focus between Edit view, Document Map and markup controls."],["shortcut","collapse-element","Alt-click the selected step to collapse its content."],["view","source","Open XML/source view."],["view","content","Return to Content/Edit view."],["view","preview","Open Preview."],["lefttab","resources","Open Resources in the left pane."],["lefttab","document","Return to Document Map."],["navtop",null,"Navigate from the selected step to the title using Document Map."]]},{"id":"ch2","title":"2. Insert Markup & Quick Tags","focus":"PTC-style Quick Tags, Insert Markup and context-sensitive structure","specs":[["shortcut","markup-list","Press Control+M, then choose a valid element to insert it."],["shortcut","markup-dialog","Press Control+Shift+M, then insert any valid element from the dialog into the selected step."],["quickopen",null,"Press Enter to open Quick Tags on the selected step."],["quickinsert","cmd","Use Quick Tags to insert cmd inside the selected step."],["quickinsert","note","Use Quick Tags to insert note inside the selected step."],["quickinsert","warning","Use Quick Tags to insert warning inside the selected step."],["insert","inside","cmd","step","Insert cmd INSIDE the selected step."],["insert","inside","note","step","Insert note INSIDE the selected step."],["insert","inside","codeblock","step","Insert codeblock INSIDE the selected step."],["insert","after","para","title","Insert para AFTER the title."],["insert","after","sectionTitle","para","Insert sectionTitle AFTER the paragraph."],["insert","after","step","sectionTitle","Insert step AFTER sectionTitle."],["insert","before","warning","step","Insert warning BEFORE the step."],["leafcheck","para","With para selected, confirm no child markup is offered."],["stepchoices",null,"Select step and confirm cmd, note, warning, caution and codeblock are valid children."],["rootinsert","para","Select mainProcedure and insert a top-level para."],["sequence",null,"Build step → cmd from the sectionTitle."],["shortcut","insert-table","Use Alt+Shift+T to insert/open a table at a valid location."],["showcontext",null,"Use Tools > Show Context for the current position."],["doctype",null,"Open Tools > Document Type Viewer."]]},{"id":"ch3","title":"3. Edit Markup & Attributes","focus":"Modify Attributes, change markup, structural movement and editing shortcuts","specs":[["shortcut","modify-attributes","Use Ctrl+D to open Modify Attributes for the selected step."],["attr","step","applicRefId","APP-01","Set applicRefId=APP-01 on the step."],["attr","para","changeMark","1","Set changeMark=1 on the paragraph."],["changemarkup",null,"Use Edit > Change Markup on the selected note."],["delete","para","Delete the selected extra paragraph."],["moveup","note","Move the note above the cmd."],["movedown","warning","Move the warning below the paragraph."],["undo",null,"Undo the accidental note with Ctrl+Z (or the Undo button)."],["redo",null,"Insert a note, undo it, then redo with Ctrl+Y."],["shortcut","save","Use Ctrl+S to save the document."],["shortcut","find","Use Ctrl+F to open the Find/Replace dialog on the Find/Replace tab."],["findtag","step","Open Find/Replace, switch to Find Tag/Attribute, enter step, and click Find Next."],["text","para","New paragraph text.","Change the paragraph text to “New paragraph text.”"],["text","cmd","Verify the system status.","Change the cmd text to “Verify the system status.”"],["elementprops",null,"Set Selected Element ID to ELEM-01 and apply it."],["table",null,"Open the Table editor."],["xref",null,"Open the Xref picker."],["comment",null,"Add a review comment (trainer workflow extension)."],["tag","full","Switch to Full Tags before structural editing."],["view","content","Return to Content/Edit view."]]},{"id":"ch4","title":"4. Find, Context & Completeness","focus":"Context Rules, Check Completeness, structural search and correction","specs":[["contexton",null,"Make sure Tools > Context Rules is ON."],["showcontext",null,"Use Tools > Show Context on the selected step."],["doctype",null,"Open Tools > Document Type Viewer."],["completeness",null,"Run Tools > Check Completeness on an incomplete step."],["fixcomplete",null,"Run Check Completeness, add the missing cmd, then run it again."],["issues",null,"Run Check Completeness, then open the Issues tab at the bottom."],["completeness",null,"Run Check Completeness again after reviewing the Issues tab."],["findtag","warning","Open Find/Replace on Find Tag/Attribute and find the next warning element."],["leafcheck","title","Select title and confirm it has no child insertions."],["stepchoices",null,"Select step and inspect its valid children, including caution."],["deletesecondtitle",null,"An imported document contains two title elements. Delete the extra title so only one remains."],["addtitle",null,"Insert the missing title before the paragraph."],["emptycleanup",null,"Delete the empty note."],["tag","full","Use Full Tags to inspect an incomplete structure."],["maintenance",null,"Add MAINTENANCE mode text to satisfy the project rule."],["applicability",null,"Set the project applicability expression and apply it."],["righttab","brex","Open the BREX Rules tab and inspect the active project rules. Then return to Learning and click Check."],["profile","balanced","Switch the active Project BREX profile to Balanced."],["profile","saab_strict","Switch the active Project BREX profile back to Strict."],["referencescheck",null,"Open References, inspect the tab, then return to Learning and click Check."]]},{"id":"ch5","title":"5. Everyday Professional Flow","focus":"A realistic authoring rhythm: navigate, insert, edit, check, save and hand off","specs":[["view","content","Make sure Content/Edit view is active."],["tag","partial","Use Partial Tags for normal editing."],["shortcut","markup-list","Press Control+M and inspect the valid markup list."],["quickinsert","cmd","Use Quick Tags to complete an empty step with cmd."],["attr","step","applicRefId","APP-01","Set applicRefId=APP-01 on the step."],["shortcut","modify-attributes","Re-open Modify Attributes with Ctrl+D."],["shortcut","find","Open the Find/Replace dialog with Ctrl+F."],["findtag","step","In the same Find/Replace dialog, switch to Find Tag/Attribute and find the next step."],["shortcut","tagcycle","Cycle tag display with Ctrl+Shift+L."],["view","source","Inspect XML/source."],["view","content","Return to Content/Edit view."],["view","preview","Preview the document."],["completeness",null,"Run Check Completeness."],["fixcomplete",null,"Fix an incomplete step and rerun Check Completeness."],["undo",null,"Undo the accidental note with Ctrl+Z (or the Undo button)."],["redo",null,"Insert a note, undo it, then redo with Ctrl+Y."],["shortcut","save","Save with Ctrl+S."],["submit",null,"In Properties > Document State, click Submit for review."],["returnauthor",null,"In Properties > Document State, click Return to author."],["checkin",null,"Click Check in in the top bar to return the DM to the CSDB."]]}];
 function drillSetupBase(selectType=null,variant=0){
  const base=[{type:"title",text:"Training document"},{type:"sectionTitle",text:"Procedure"},{type:"para",text:"System description."},{type:"warning",text:"Disconnect power before maintenance."},{type:"step",text:"Check system status.",children:[{type:"cmd",text:"Verify status."},{type:"note",text:"Record the result."}]},{type:"table",rows:[["Item","Value"],["Mode","Normal"]]}];
  if(selectType==="cmd"||selectType==="note") return drillModel(base,selectType);
@@ -30,13 +30,31 @@ function makeDrill(spec){
    d.test=()=>state.rootSelected===true
  }
  else if(k==="tag"){d.setup=()=>{state.tagMode=p[0]==="partial"?"full":"partial";return drillSetupBase("para")};d.test=()=>currentTagMode()===p[0]}
- else if(k==="view"){d.setup=()=>drillSetupBase("para");d.test=()=>document.querySelector(`.bottom-tab[data-mode="${p[0]}"]`)?.classList.contains("active")}
+ else if(k==="view"){
+   const target=p[0];
+   d.setup=()=>{
+     const m=drillSetupBase("para");
+     // Always start on a different view so jumping directly to a drill
+     // cannot satisfy it before the learner performs the action.
+     m.initialMode=target==="content"?"source":"content";
+     return m;
+   };
+   d.test=()=>document.querySelector(`.bottom-tab[data-mode="${target}"]`)?.classList.contains("active")
+ }
  else if(k==="righttab"){
    const tab=p[0];
    d.setup=()=>drillSetupBase("para");
    d.test=()=>!!state.drillEvidence?.rightTabsOpened?.[tab] || state.lastLearningAction?.kind==="righttab"&&state.lastLearningAction?.name===tab;
  }
- else if(k==="lefttab"){d.setup=()=>drillSetupBase("para");d.test=()=>state.leftMode===p[0]}
+ else if(k==="lefttab"){
+   const target=p[0];
+   d.setup=()=>{
+     const m=drillSetupBase("para");
+     m.initialLeftMode=target==="document"?"resources":"document";
+     return m;
+   };
+   d.test=()=>state.leftMode===target
+ }
  else if(k==="reveal"){d.setup=()=>drillSetupBase("cmd");d.test=()=>state.lastLearningAction?.kind==="reveal"}
  else if(k==="navtop"){
    d.setup=()=>{
@@ -67,7 +85,15 @@ function makeDrill(spec){
    }
  }
  else if(k==="quickinsert"){const type=p[0];d.setup=()=>{const m=drillSetupBase("step");m.nodes.find(n=>n.type==="step").children=[];return m};d.test=()=>hasChild("step",type)}
- else if(k==="leafcheck"){const type=p[0];d.setup=()=>drillSetupBase(type);d.test=()=>/no valid elements/i.test($("#elementHint")?.textContent||"")}
+ else if(k==="leafcheck"){
+   const type=p[0];
+   d.setup=()=>{
+     const m=drillSetupBase(type);
+     if(/^Select\b/i.test(prompt))m.neutralSelection=true;
+     return m;
+   };
+   d.test=()=>getNodeById(state.selectedId)?.node.type===type&&/no valid elements/i.test($("#elementHint")?.textContent||"")
+ }
  else if(k==="rootinsert"){
    const type=p[0];
    d.setup=()=>{
@@ -140,7 +166,14 @@ function makeDrill(spec){
  else if(k==="validate"){d.setup=()=>{const m=drillSetupBase("step");m.nodes.find(n=>n.type==="step").children=[];return m};d.test=()=>state.lastLearningAction?.kind==="validate"}
  else if(k==="fixcmd"||k==="validatefix"){d.setup=()=>{const m=drillSetupBase("step");m.nodes.find(n=>n.type==="step").children=[];return m};d.test=()=>hasChild("step","cmd")&&(k!=="validatefix"||state.lastLearningAction?.kind==="validate")}
  else if(k==="maintenance"){d.setup=()=>drillSetupBase("para");d.test=()=>/MAINTENANCE mode/i.test(flattenText(state.model.nodes))}
- else if(k==="applicability"){d.setup=()=>drillSetupBase("para");d.test=()=>!!String(state.model.applicability?.expression||"").trim()}
+ else if(k==="applicability"){
+   d.setup=()=>{
+     const m=drillSetupBase("para");
+     m.initialApplicability={product:"Surface Sensor Software",variant:"All",swFrom:"",swTo:"",serial:"All serials",expression:""};
+     return m;
+   };
+   d.test=()=>!!String(state.model.applicability?.expression||"").trim()
+ }
  else if(k==="profile"){
    const target=p[0];
    d.setup=()=>{
@@ -160,11 +193,28 @@ function makeDrill(spec){
    d.test=()=>$("#brexProfileSelect")?.value===target;
  }
  else if(k==="toggle"){d.setup=()=>drillSetupBase("para");d.test=()=>!!$("#"+p[0])?.checked}
- else if(k==="stepchoices"){d.setup=()=>drillSetupBase("step");d.test=()=>["cmd","note","warning","codeblock"].every(x=>($("#elementHint")?.textContent||"").includes(x))}
+ else if(k==="stepchoices"){
+   d.setup=()=>{
+     const m=drillSetupBase("step");
+     m.neutralSelection=true;
+     return m;
+   };
+   d.test=()=>{
+     const selected=getNodeById(state.selectedId)?.node.type==="step";
+     return selected&&["cmd","note","warning","caution","codeblock"].every(x=>($("#elementHint")?.textContent||"").includes(x));
+   }
+ }
  else if(k==="deletesecondtitle"){d.setup=()=>drillModel([{type:"title",text:"One"},{type:"title",text:"Two"},{type:"para",text:"Text"}],"title",1);d.test=()=>state.model.nodes.filter(n=>n.type==="title").length===1}
  else if(k==="addtitle"){d.setup=()=>drillModel([{type:"para",text:"No title"}],"para");d.test=()=>state.model.nodes[0]?.type==="title"}
  else if(k==="emptycleanup"){d.setup=()=>drillModel([{type:"title",text:"Cleanup"},{type:"note",text:""}],"note");d.test=()=>!getNodeByType("note")}
- else if(k==="issues"){d.setup=()=>drillSetupBase("step");d.test=()=>document.querySelector('.bottom-tab[data-mode="issues"]')?.classList.contains("active")}
+ else if(k==="issues"){
+   d.setup=()=>{
+     const m=drillSetupBase("step");
+     m.initialMode="content";
+     return m;
+   };
+   d.test=()=>document.querySelector('.bottom-tab[data-mode="issues"]')?.classList.contains("active")
+ }
  else if(k==="referencescheck"){
    d.setup=()=>drillSetupBase("para");
    d.test=()=>!!state.drillEvidence?.rightTabsOpened?.references || state.lastLearningAction?.kind==="righttab"&&state.lastLearningAction?.name==="references";
@@ -176,8 +226,14 @@ function makeDrill(spec){
      return a?.kind==="save" || (a?.kind==="shortcut"&&a?.name==="save") || !!state.drillEvidence?.saved;
    }
  }
- else if(k==="submit"){d.setup=()=>{const m=drillSetupBase("step");return m};d.test=()=>state.model.meta.workflow==="In Review"}
- else if(k==="returnauthor"){d.setup=()=>{state.model.meta.workflow="In Review";return drillSetupBase("step")};d.test=()=>state.model.meta.workflow==="In Work"}
+ else if(k==="submit"){
+   d.setup=()=>{const m=drillSetupBase("step");m.initialWorkflow="In Work";return m};
+   d.test=()=>state.model.meta.workflow==="In Review"
+ }
+ else if(k==="returnauthor"){
+   d.setup=()=>{const m=drillSetupBase("step");m.initialWorkflow="In Review";return m};
+   d.test=()=>state.model.meta.workflow==="In Work"
+ }
  else if(k==="checkin"){d.setup=()=>drillSetupBase("para");d.test=()=>state.lastLearningAction?.kind==="checkin"||!!state.drillEvidence?.checkedIn}
  else if(k==="shortcut"){
    const name=p[0];
@@ -303,6 +359,9 @@ function applyDrillSetup(setup){
  state.model.meta.dmc="TRAINING-CORE-SKILLS";
  state.model.meta.workflow=state.model.meta.workflow||"In Work";
  state.model.nodes=spec.nodes;
+ if(spec.initialWorkflow)state.model.meta.workflow=spec.initialWorkflow;
+ if(spec.initialApplicability)state.model.applicability=JSON.parse(JSON.stringify(spec.initialApplicability));
+ if(spec.initialLeftMode)state.leftMode=spec.initialLeftMode;
  state.issues=[];
  state.dirty=true;
 
@@ -335,7 +394,8 @@ function applyDrillSetup(setup){
  updateContext();
  syncSourcePassive();
  renderPreview();
- if(spec.selectType){
+ if(spec.initialMode&&typeof setMode==="function")setMode(spec.initialMode);
+ if(spec.selectType && !spec.neutralSelection){
    const wanted=getNodesByType(spec.selectType)[spec.selectIndex||0];
    if(wanted){
      state.rootSelected=false;

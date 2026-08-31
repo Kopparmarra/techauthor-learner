@@ -892,3 +892,15 @@ Scenario Practice deliberately does not tell the learner which buttons to press.
 - The first occurrence is preserved; later duplicates have the copied explicit ID cleared.
 - Repair works for both single-document JSON backups and full project backups.
 - The import dialog reports how many legacy duplicate IDs were repaired.
+
+## v7.41 — Beginner drill initial-state audit
+- Fixed the Chapter 1 SELECT drills so title/para/step/cmd are no longer silently preselected after the neutral setup.
+- Audited all 100 drills for the same class of problem.
+- View drills now always start on a different view, even when jumped to directly.
+- Document Map / Resources drills now start on the opposite left-pane tab.
+- `Select step and inspect...` drills now require the learner to select the step.
+- The Chapter 4 `Select title...` leaf drill now starts with no selection.
+- Issues drill starts away from Issues.
+- Applicability drill always starts with an empty applicability expression.
+- Submit / Return workflow drills now explicitly start in the opposite workflow state.
+- Added regression checks for these initial-state conditions to `tests/drill-smoke.mjs`.

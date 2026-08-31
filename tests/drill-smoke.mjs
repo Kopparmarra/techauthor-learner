@@ -68,7 +68,8 @@ const sandbox = {
   updateContext() {},
   syncSourcePassive() {},
   renderPreview() {},
-  selectElement() {},
+  setMode(mode) { state.mockMode = mode; },
+  selectElement(id) { state.selectedId = id; },
   revealSelectedInEditor() {},
   updateUndoRedoButtons() {},
   closeQuickTags() {},
@@ -145,6 +146,45 @@ assert(undoDrill.test() === false, "undo test fails before undo");
 state.model.nodes = state.model.nodes.filter(n => n.type !== "note");
 state.drillEvidence.undoUsed = true;
 assert(undoDrill.test() === true, "undo test passes when note gone + evidence");
+
+
+
+// Regression audit: drills that ask the learner to SELECT must not start preselected.
+const selectDrills = [
+  ["select", "title", "Select the title in Document Map."],
+  ["select", "para", "Select the paragraph in Document Map."],
+  ["select", "step", "Select the step in Document Map."],
+  ["select", "cmd", "Select the cmd in Document Map."],
+];
+for (const spec of selectDrills) {
+  const d = makeDrill(spec);
+  const m = d.setup();
+  assert(m.neutralSelection === true, `${spec[1]} select drill requests neutral selection`);
+}
+
+// Regression audit: task wording "Select title..." on leafcheck must also start neutral.
+const leafSelect = makeDrill(["leafcheck","title","Select title and confirm it has no child insertions."]);
+assert(leafSelect.setup().neutralSelection === true, "leafcheck Select-title drill starts neutral");
+
+// Regression audit: stepchoices explicitly asks the learner to select step.
+const stepChoices = makeDrill(["stepchoices",null,"Select step and inspect its valid children."]);
+assert(stepChoices.setup().neutralSelection === true, "stepchoices drill starts neutral");
+
+// Regression audit: view/left-pane/workflow/applicability drills start away from their target.
+assert(makeDrill(["view","content","Return to Content/Edit view."]).setup().initialMode !== "content",
+  "Content view drill starts on another view");
+assert(makeDrill(["view","source","Open XML/source view."]).setup().initialMode !== "source",
+  "Source view drill starts on another view");
+assert(makeDrill(["lefttab","document","Return to Document Map."]).setup().initialLeftMode !== "document",
+  "Document Map drill starts on Resources");
+assert(makeDrill(["lefttab","resources","Open Resources."]).setup().initialLeftMode !== "resources",
+  "Resources drill starts on Document Map");
+assert(makeDrill(["submit",null,"Submit for review."]).setup().initialWorkflow === "In Work",
+  "Submit drill starts In Work");
+assert(makeDrill(["returnauthor",null,"Return to author."]).setup().initialWorkflow === "In Review",
+  "Return-to-author drill starts In Review");
+assert(makeDrill(["applicability",null,"Set applicability."]).setup().initialApplicability?.expression === "",
+  "Applicability drill starts with a blank expression");
 
 if (failed) {
   console.error(`\n${failed} assertion(s) failed`);
