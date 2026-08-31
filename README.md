@@ -904,3 +904,11 @@ Scenario Practice deliberately does not tell the learner which buttons to press.
 - Applicability drill always starts with an empty applicability expression.
 - Submit / Return workflow drills now explicitly start in the opposite workflow state.
 - Added regression checks for these initial-state conditions to `tests/drill-smoke.mjs`.
+
+## v7.42 — macOS Alt shortcuts + Chapter 1 sequence
+- Fixed Alt+Ctrl+O and Alt+Ctrl+N on macOS by matching physical key codes as well as `event.key`; Option can otherwise turn O/N into special/dead-key characters.
+- Applied the same robust key matching to Alt+Shift+T and the main Ctrl/Cmd letter shortcuts.
+- Reordered Chapter 1 so `Open Resources` comes immediately before `Alt+Ctrl+O to show Document Map`.
+- The Document Map shortcut drill now explicitly starts from Resources.
+- Normal-view drill explicitly starts with Document Map visible.
+- Final Document Map navigation drill restores Document Map before starting.

@@ -186,6 +186,22 @@ assert(makeDrill(["returnauthor",null,"Return to author."]).setup().initialWorkf
 assert(makeDrill(["applicability",null,"Set applicability."]).setup().initialApplicability?.expression === "",
   "Applicability drill starts with a blank expression");
 
+
+// Chapter 1 sequence regression: Resources must precede the Document Map shortcut.
+const ch1 = drillChapters[0];
+const resourcesIndex = ch1.drills.findIndex(d => /Open Resources in the left pane/i.test(d.prompt));
+const docmapIndex = ch1.drills.findIndex(d => /Alt\+Ctrl\+O/i.test(d.prompt));
+assert(resourcesIndex >= 0 && docmapIndex === resourcesIndex + 1,
+  "Chapter 1 shows Resources immediately before Alt+Ctrl+O Document Map drill");
+
+const docmapDrill = makeDrill(["shortcut","docmap","Use Alt+Ctrl+O to show Document Map."]);
+assert(docmapDrill.setup().initialLeftMode === "resources",
+  "Document Map shortcut drill starts from Resources");
+
+const normalDrill = makeDrill(["shortcut","normal","Use Alt+Ctrl+N for Normal view (hide Document Map)."]);
+assert(normalDrill.setup().initialLeftMode === "document",
+  "Normal-view shortcut drill starts with Document Map selected");
+
 if (failed) {
   console.error(`\n${failed} assertion(s) failed`);
   process.exit(1);

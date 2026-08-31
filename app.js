@@ -3962,19 +3962,22 @@ document.addEventListener("mousedown",e=>{
 },true);
 
 document.addEventListener("keydown",e=>{
- const k=e.key.toLowerCase(),mod=e.ctrlKey||e.metaKey;
- if(mod&&e.shiftKey&&k==="l"){e.preventDefault();return cycleTagMode()}
- if(mod&&k==="s"){e.preventDefault();noteShortcut("save");return saveLocal()}
- if(mod&&k==="f"&&!e.shiftKey){e.preventDefault();noteShortcut("find");return showFindReplace("text")}
- if(mod&&e.shiftKey&&k==="f"){e.preventDefault();return findAgain()}
- if(mod&&k==="d"){e.preventDefault();noteShortcut("modify-attributes");return showModifyAttributes()}
- if(mod&&k==="m"&&!e.shiftKey){if(e.ctrlKey&&!e.metaKey)return; e.preventDefault();return focusInsertMarkup()}
- if(mod&&e.shiftKey&&k==="m"){if(e.ctrlKey&&!e.metaKey)return; e.preventDefault();return showInsertMarkupDialog()}
- if(e.altKey&&mod&&k==="o"){e.preventDefault();return showDocumentMapView()}
- if(e.altKey&&mod&&k==="n"){e.preventDefault();return showNormalView()}
- if(mod&&k==="l"){e.preventDefault();return refreshEditorScreen()}
+ const k=String(e.key||"").toLowerCase(),code=String(e.code||""),mod=e.ctrlKey||e.metaKey;
+ const keyIs=(letter)=>k===letter.toLowerCase()||code===`Key${letter.toUpperCase()}`;
+ if(mod&&e.shiftKey&&keyIs("l")){e.preventDefault();return cycleTagMode()}
+ if(mod&&keyIs("s")){e.preventDefault();noteShortcut("save");return saveLocal()}
+ if(mod&&keyIs("f")&&!e.shiftKey){e.preventDefault();noteShortcut("find");return showFindReplace("text")}
+ if(mod&&e.shiftKey&&keyIs("f")){e.preventDefault();return findAgain()}
+ if(mod&&keyIs("d")){e.preventDefault();noteShortcut("modify-attributes");return showModifyAttributes()}
+ if(mod&&keyIs("m")&&!e.shiftKey){if(e.ctrlKey&&!e.metaKey)return; e.preventDefault();return focusInsertMarkup()}
+ if(mod&&e.shiftKey&&keyIs("m")){if(e.ctrlKey&&!e.metaKey)return; e.preventDefault();return showInsertMarkupDialog()}
+ // On macOS, Option modifies e.key (Option+O can report "ø", Option+N a dead key).
+ // e.code keeps the physical key identity, so the Arbortext-style shortcuts still work.
+ if(e.altKey&&mod&&keyIs("o")){e.preventDefault();return showDocumentMapView()}
+ if(e.altKey&&mod&&keyIs("n")){e.preventDefault();return showNormalView()}
+ if(mod&&keyIs("l")){e.preventDefault();return refreshEditorScreen()}
  if(e.key==="F6"){e.preventDefault();return cycleFocus()}
- if(e.altKey&&e.shiftKey&&k==="t"){e.preventDefault();return insertTableShortcut()}
+ if(e.altKey&&e.shiftKey&&keyIs("t")){e.preventDefault();return insertTableShortcut()}
  if(mod&&e.key===">"){e.preventDefault();return changeMagnification(1)}
  if(mod&&e.key==="<"){e.preventDefault();return changeMagnification(-1)}
 },true);
